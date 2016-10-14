@@ -34,19 +34,6 @@ class IProcess
         {
             return args_;
         }
-
-        static std::vector<std::string> parseArguments(int argc, char* argv[])
-        {
-            std::vector<std::string> args(argc);
-
-            for (std::size_t i = 0; i < argc; ++i)
-            {
-                args[i] = std::string(argv[i]);
-            }
-
-            return args;
-        }
-
         /* ====================  MUTATORS      ======================================= */
         virtual int32_t run() = 0;
 
@@ -54,7 +41,7 @@ class IProcess
 
     protected:
         /* ====================  METHODS       ======================================= */
-        IProcess(std::vector<std::string> args)
+        IProcess(StringVector args)
             :
                 args_(args)
         {}

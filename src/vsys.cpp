@@ -1,34 +1,26 @@
 
 #include <vsys.hpp>
-#include <IProcess.hpp>
+#include <ServerProcess.hpp>
 
 #include <iostream>
 #include <string>
 
-class Proc : public IProcess
+StringVector parseArguments(int argc, char* argv[])
 {
-    public:
-        Proc(std::vector<std::string> args)
-            :IProcess(args)
-        {}
+    std::vector<std::string> args(argc);
 
-        int32_t run() override
-        {
-            std::cout << "running shit" << std::endl;
+    for (std::size_t i = 0; i < argc; ++i)
+        args[i] = std::string(argv[i]);
 
-            for (auto& str : args_)
-                std::cout << str << std::endl;
-
-            return 42;
-        }
-};
+    return args;
+}
 
 int main(int argc, char* argv[])
 {
     std::cout << "hello world, this is vsys <3\n";
 
-    auto args = IProcess::parseArguments(argc, argv);
-    Proc prc(args);
+    auto args = parseArguments(argc, argv);
+    ServerProcess prc(args);
     prc.run();
 
     return EXIT_SUCCESS;

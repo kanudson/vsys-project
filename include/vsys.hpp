@@ -24,8 +24,13 @@
 #include <thread>
 #include <future>
 #include <memory>
+#include <iostream>
 
 #include <cstdint>
+
+typedef std::vector<std::string> StringVector;
+
+StringVector parseArguments(int argc, char* argv[]);
 
 #endif  //  VSYS_HPP__
 
