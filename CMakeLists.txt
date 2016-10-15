@@ -6,13 +6,12 @@ PROJECT(ma4vsys)
 SET(CMAKE_CXX_STANDARD 14)
 
 # includes control.cmake.utils/FindSDL2.cmake
-#set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/control.cmake.utils)
 
 ##  Boost Library Paths
 if (WIN32)
     SET(BOOST_INC       "boost include dir" CACHE PATH "desc")
     SET(BOOST_LIB       "boost lib dir"     CACHE PATH "desc")
-    
+
     SET(SDL2_INC        "sdl2 include dir"  CACHE PATH "desc")
     SET(SDL2_LIB        "sdl2 lib"          CACHE FILEPATH "desc")
     SET(SDL2_MAINLIB    "sdl2 main lib"     CACHE FILEPATH "desc")
@@ -28,7 +27,11 @@ ADD_DEFINITIONS( -DBOOST_ALL_NO_LIB )
 FIND_PACKAGE(Boost REQUIRED
     program_options
     filesystem
+    system
+    thread
 )
+include_directories(${Boost_INCLUDE_DIR})
+link_directories(${Boost_LIBRARY_DIR})
 
 ##  Add OpenMP flags to compiler
 FIND_PACKAGE(OpenMP)

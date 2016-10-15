@@ -26,14 +26,31 @@
 #include <ma4lib/vsys.hpp>
 #include <ma4lib/IProcess.hpp>
 
+#include <SDL2/SDL.h>
+
 class ServerProcess : public IProcess
 {
-    public:
-        ServerProcess(StringVector& args)
-            : IProcess(args)
-        {}
+public:
+    ServerProcess(StringVector& args)
+        : IProcess(args)
+    {}
 
-        int32_t run() override;
+    int32_t init() override;
+    int32_t run() override;
+    int32_t shutdown() override;
+
+private:
+    SDL_Window* window_ = nullptr;
+    SDL_Renderer* render_ = nullptr;
+    SDL_Surface* surface_ = nullptr;
+    bool keepRunning_;
+
+    void processEvents();
+
+    void processPixel(int pixelx, int pixely,
+                      int screenWidth, int screenHeight,
+                      float offsetLeft, float offsetTop,
+                      float offsetRight, float offsetBottom, int iterations);
 };
 
 #endif // mavsys_ServerProcess_h__

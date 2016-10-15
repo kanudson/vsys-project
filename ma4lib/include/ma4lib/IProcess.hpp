@@ -27,26 +27,28 @@
 
 class IProcess
 {
-    public:
-        virtual ~IProcess() {}
+public:
+    virtual ~IProcess() {}
 
-        inline auto getArguments()
-        {
-            return args_;
-        }
-        virtual int32_t run() = 0;
+    inline auto getArguments()
+    {
+        return args_;
+    }
 
-    protected:
-        IProcess(StringVector args)
-            :
-                args_(args)
-        {}
+    virtual int32_t init() = 0;
+    virtual int32_t run() = 0;
+    virtual int32_t shutdown() = 0;
 
-        const StringVector args_;
+protected:
+    IProcess(StringVector args)
+        :args_(args)
+    {}
 
-    private:
-        IProcess(const IProcess&) = delete;
-        IProcess(const IProcess&&) = delete;
+    const StringVector args_;
+
+private:
+    IProcess(const IProcess&) = delete;
+    IProcess(const IProcess&&) = delete;
 };
 
 #endif // mavsys_IProcess_h__

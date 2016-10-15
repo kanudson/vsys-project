@@ -12,12 +12,12 @@ include_directories(
 file (GLOB SOURCES      src/*.cpp)
 file (GLOB HEADERSPP    include/*.hpp)
 file (GLOB HEADERS      include/*.h)
-
 add_executable (ma4server ${SOURCES} ${HEADERSPP} ${HEADERS})
 
 target_link_libraries (ma4server ma4lib)
 if (WIN32)
     target_link_libraries (ma4server ${SDL2_LIB} ${SDL2_MAINLIB})
+    target_link_libraries (ma4server ${Boost_LIBRARIES})
 endif (WIN32)
 
 if (UNIX)
