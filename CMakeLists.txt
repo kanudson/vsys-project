@@ -1,6 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 
-PROJECT(ma2vsys)
+PROJECT(ma4vsys)
 
 # in top level cmake config to set this for all projets
 SET(CMAKE_CXX_STANDARD 14)
@@ -12,6 +12,10 @@ SET(CMAKE_CXX_STANDARD 14)
 if (WIN32)
     SET(BOOST_INC       "boost include dir" CACHE PATH "desc")
     SET(BOOST_LIB       "boost lib dir"     CACHE PATH "desc")
+    
+    SET(SDL2_INC        "sdl2 include dir"  CACHE PATH "desc")
+    SET(SDL2_LIB        "sdl2 lib"          CACHE FILEPATH "desc")
+    SET(SDL2_MAINLIB    "sdl2 main lib"     CACHE FILEPATH "desc")
 endif (WIN32)
 
 ## All the Boost Library stuff
@@ -33,19 +37,5 @@ IF (OPENMP_FOUND)
     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 ENDIF()
 
-include_directories(
-    ${PROJECT_SOURCE_DIR}/include
-    ${BOOST_INCLUDEDIR}
-)
-
-file (GLOB SOURCES      src/*.cpp)
-file (GLOB HEADERSPP    include/*.hpp)
-file (GLOB HEADERS      include/*.h)
-
-#add_executable (mavsys ${SOURCES} ${HEADERS} ${HEADERSPP})
-add_executable (mavsys ${SOURCES})
-
-if (UNIX)
-    target_link_libraries (mavsys pthread boost_system boost_chrono)
-endif (UNIX)
-
+ADD_SUBDIRECTORY(ma4lib)
+ADD_SUBDIRECTORY(ma4server)
