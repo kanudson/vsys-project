@@ -14,7 +14,7 @@ file (GLOB HEADERS      include/ma4lib/*.h)
 add_library (ma4lib STATIC ${SOURCES} ${HEADERSPP} ${HEADERS})
 
 if (WIN32)
-    target_link_libraries (ma4lib ${SDL2_MAINLIB})
+    #target_link_libraries (ma4lib)
 endif (WIN32)
 
 if (UNIX)

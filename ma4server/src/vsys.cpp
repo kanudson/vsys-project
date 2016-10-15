@@ -36,14 +36,44 @@ StringVector parseArguments(int argc, char* argv[])
     return args;
 }
 
+int32_t run(IProcess& proc)
+{
+    int32_t res = 0;
+
+    if (auto erg = proc.init())
+    {
+        std::cout << "init failed with code " << erg << std::endl;
+        throw std::runtime_error("init failed");
+    }
+
+    res = proc.run();
+
+    if (auto erg = proc.shutdown())
+    {
+        std::cout << "shutdown failed with code " << erg << std::endl;
+        throw std::runtime_error("shutdown failed");
+    }
+
+    return res;
+}
+
 int main(int argc, char* argv[])
 {
     std::cout << "hello world, this is m4bin (vsys) <3\n";
-
     auto args = parseArguments(argc, argv);
-    ServerProcess prc(args);
-    prc.run();
 
-    return EXIT_SUCCESS;
+    int32_t res = 0;
+    try
+    {
+        ServerProcess proc(args);
+        res = run(proc);
+    }
+    catch (std::exception e)
+    {
+        std::cout << e.what() << std::endl;
+        return -1;
+    }
+
+    return res;
 }
 
