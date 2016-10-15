@@ -20,21 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef mavsys_vsys_h__
-#define mavsys_vsys_h__
+#ifndef ma4server_CpuCalculator_h__
+#define ma4server_CpuCalculator_h__
 
-#include <vector>
-#include <algorithm>
-#include <thread>
-#include <future>
-#include <memory>
-#include <iostream>
+#include <ma4lib/vsys.hpp>
+#include <ma4lib/ICalculator.hpp>
 
-#include <cstdint>
+class CpuCalculator :
+    public ICalculator
+{
+public:
+    void calculate() override;
+};
 
-typedef std::vector<std::string> StringVector;
-typedef std::vector<int32_t> DataVector;
-
-StringVector parseArguments(int argc, char* argv[]);
-
-#endif // mavsys_vsys_h__
+#endif // ma4server_CpuCalculator_h__

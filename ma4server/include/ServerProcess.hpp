@@ -40,17 +40,16 @@ public:
     int32_t shutdown() override;
 
 private:
+    const int screenWidth = 1920;
+    const int screenHeight = 1080;
+
     SDL_Window* window_ = nullptr;
     SDL_Renderer* render_ = nullptr;
     SDL_Surface* surface_ = nullptr;
     bool keepRunning_;
 
     void processEvents();
-
-    void processPixel(int pixelx, int pixely,
-                      int screenWidth, int screenHeight,
-                      float offsetLeft, float offsetTop,
-                      float offsetRight, float offsetBottom, int iterations);
+    void processImage();
 };
 
 #endif // mavsys_ServerProcess_h__

@@ -20,21 +20,65 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef mavsys_vsys_h__
-#define mavsys_vsys_h__
+#ifndef ma4lib_ICalculator_h__
+#define ma4lib_ICalculator_h__
 
-#include <vector>
-#include <algorithm>
-#include <thread>
-#include <future>
-#include <memory>
-#include <iostream>
+#include <ma4lib/vsys.hpp>
 
-#include <cstdint>
+class ICalculator
+{
+public:
+    virtual void calculate() = 0;
 
-typedef std::vector<std::string> StringVector;
-typedef std::vector<int32_t> DataVector;
+    virtual ~ICalculator()
+    {}
 
-StringVector parseArguments(int argc, char* argv[]);
+    void setScreenWidth(int32_t val)
+    {
+        screenWidth = val;
+    }
 
-#endif // mavsys_vsys_h__
+    void setScreenHeight(int32_t val)
+    {
+        screenHeight = val;
+    }
+
+    void setOffsetLeft(float val)
+    {
+        offsetLeft = val;
+    }
+
+    void setOffsetRight(float val)
+    {
+        offsetRight = val;
+    }
+
+    void setOffsetTop(float val)
+    {
+        offsetTop = val;
+    }
+
+    void setOffsetBottom(float val)
+    {
+        offsetBottom = val;
+    }
+
+    void setMaxIterations(int32_t val)
+    {
+        maxIterations = val;
+    }
+
+    DataVector getData()
+    {
+        return data;
+    }
+
+protected:
+    DataVector data;
+
+    int32_t screenWidth, screenHeight;
+    float offsetLeft, offsetRight, offsetTop, offsetBottom;
+    int32_t maxIterations;
+};
+
+#endif // ma4lib_ICalculator_h__
