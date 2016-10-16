@@ -22,6 +22,8 @@
 
 #include <ServerProcess.hpp>
 #include <CpuCalculator.hpp>
+#include <ma4lib/TimeMeasure.hpp>
+
 #include <boost/thread.hpp>
 
 int32_t ServerProcess::init()
@@ -83,9 +85,21 @@ void ServerProcess::processEvents()
         {
             keepRunning_ = false;
         }
-        else if ((e.type == SDL_KEYDOWN) && (e.key.keysym.sym == SDLK_ESCAPE))
+        else if (e.type == SDL_KEYDOWN)
         {
-            keepRunning_ = false;
+            switch (e.key.keysym.sym)
+            {
+            case SDLK_ESCAPE:
+                keepRunning_ = false;
+                break;
+
+            case SDLK_r:
+                processImage();
+                break;
+
+            default:
+                break;
+            }
         }
     }
 }
@@ -103,27 +117,36 @@ void ServerProcess::processImage()
     calc.setOffsetBottom(-1.0f);
     calc.setOffsetLeft(-2.5f);
     calc.setOffsetRight(1.0f);
-    calc.calculate();
 
-    std::cout << "processing... ";
-    DataVector data = calc.getData();
-    for (int y = 0; y < screenHeight; ++y)
-        for (int x = 0; x < screenWidth; ++x)
-        {
-            DataVector::value_type fullcolor = data[(screenWidth * y) + x];
+    typedef void (CpuCalculator::*FuncPtr)();
+    constexpr FuncPtr fkt = &CpuCalculator::calculate;
+    auto duration = measureTime<boost::chrono::milliseconds>(calc, fkt);
+    std::cout << "(took " << duration.count() << "ms)\t";
 
-            uint8_t color;
-            if (fullcolor > 0x000000FF)
-                color = 0xFF;
-            else if (fullcolor < 0)
-                color = 0;
-            else
-                color = static_cast<uint8_t>(fullcolor);
+    auto lambda = [&]()
+    {
+        std::cout << "processing... ";
+        DataVector data = calc.getData();
+        for (int y = 0; y < screenHeight; ++y)
+            for (int x = 0; x < screenWidth; ++x)
+            {
+                DataVector::value_type fullcolor = data[(screenWidth * y) + x];
 
-            //std::cout << std::to_string(color) << "\n\n";
-            SDL_SetRenderDrawColor(render_, color, color, color, SDL_ALPHA_OPAQUE);
-            SDL_RenderDrawPoint(render_, x, y);
-        }
+                uint8_t color;
+                if (fullcolor > 0x000000FF)
+                    color = 0xFF;
+                else if (fullcolor < 0)
+                    color = 0;
+                else
+                    color = static_cast<uint8_t>(fullcolor);
 
+                //std::cout << std::to_string(color) << "\n\n";
+                SDL_SetRenderDrawColor(render_, color, color, color, SDL_ALPHA_OPAQUE);
+                SDL_RenderDrawPoint(render_, x, y);
+            }
+    };
+
+    duration = measureTime<boost::chrono::milliseconds>(lambda);
+    std::cout << "(took " << duration.count() << "ms)\t";
     std::cout << "done!\n";
 }

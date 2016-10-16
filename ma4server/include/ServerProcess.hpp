@@ -40,8 +40,18 @@ public:
     int32_t shutdown() override;
 
 private:
-    const int screenWidth = 1920;
-    const int screenHeight = 1080;
+    //  1080p is ~2.25x of 720p
+    //
+    //  ~1050ms
+    //  2,073,600
+    //
+    //const int screenWidth = 1920;
+    //const int screenHeight = 1080;
+
+    //  ~470ms
+    //  921,600
+    const int screenWidth = 1280;
+    const int screenHeight = 720;
 
     SDL_Window* window_ = nullptr;
     SDL_Renderer* render_ = nullptr;
