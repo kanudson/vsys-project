@@ -24,15 +24,21 @@
 
 void CpuCalculator::calculate()
 {
+    //naive();
+    //pointerAccses();
+    openmp();
+}
+
+void CpuCalculator::naive()
+{
     data.resize(screenWidth * screenHeight);
+
+    const float stepHorizontal = (offsetRight - offsetLeft) / static_cast<float>(screenWidth);
+    const float stepVertical = (offsetTop - offsetBottom) / static_cast<float>(screenHeight);
 
     for (int y = 0; y < screenHeight; ++y)
         for (int x = 0; x < screenWidth; ++x)
         {
-
-            const float stepHorizontal = (offsetRight - offsetLeft) / static_cast<float>(screenWidth);
-            const float stepVertical = (offsetTop - offsetBottom) / static_cast<float>(screenHeight);
-
             //  Pixel (0,0) is top left!
             const float re = offsetLeft + (stepHorizontal * x);
             const float im = offsetTop - (stepVertical * y);
@@ -57,5 +63,84 @@ void CpuCalculator::calculate()
             }
 
             data[(screenWidth * y) + x] = iteration;
+        }
+}
+
+void CpuCalculator::pointerAccses()
+{
+    data.resize(screenWidth * screenHeight);
+    DataVector::value_type* ptr = data.data();
+
+    const float stepHorizontal = (offsetRight - offsetLeft) / static_cast<float>(screenWidth);
+    const float stepVertical = (offsetTop - offsetBottom) / static_cast<float>(screenHeight);
+
+    for (int y = 0; y < screenHeight; ++y)
+        for (int x = 0; x < screenWidth; ++x)
+        {
+            //  Pixel (0,0) is top left!
+            const float re = offsetLeft + (stepHorizontal * x);
+            const float im = offsetTop - (stepVertical * y);
+
+            float r = 0.0f;
+            float i = 0.0f;
+            int32_t iteration = 0;
+
+            //  while (x*x + y*y < 2*2  AND  iteration < max_iteration) {
+            auto rs = r * r;
+            auto is = i * i;
+            while (rs + is < 4 && iteration < maxIterations)
+            {
+                float xtemp = rs - is + re;
+                i = 2 * r * i + im;
+                r = xtemp;
+                ++iteration;
+
+                //  refresh data for next iterations
+                rs = r * r;
+                is = i * i;
+            }
+
+            *ptr++ = iteration;
+        }
+}
+
+void CpuCalculator::openmp()
+{
+    data.resize(screenWidth * screenHeight);
+    DataVector::value_type* ptr = data.data();
+
+    const float stepHorizontal = (offsetRight - offsetLeft) / static_cast<float>(screenWidth);
+    const float stepVertical = (offsetTop - offsetBottom) / static_cast<float>(screenHeight);
+
+#pragma omp parallel for schedule(static, 40)
+    for (int y = 0; y < screenHeight; ++y)
+//  can be used with intel compiler
+//#pragma omp parallel for simd schedule(static, 4)
+        for (int x = 0; x < screenWidth; ++x)
+        {
+            //  Pixel (0,0) is top left!
+            const float re = offsetLeft + (stepHorizontal * x);
+            const float im = offsetTop - (stepVertical * y);
+
+            float r = 0.0f;
+            float i = 0.0f;
+            int32_t iteration = 0;
+
+            //  while (x*x + y*y < 2*2  AND  iteration < max_iteration) {
+            auto rs = r * r;
+            auto is = i * i;
+            while (rs + is < 4 && iteration < maxIterations)
+            {
+                float xtemp = rs - is + re;
+                i = 2 * r * i + im;
+                r = xtemp;
+                ++iteration;
+
+                //  refresh data for next iterations
+                rs = r * r;
+                is = i * i;
+            }
+
+            *(ptr + x + (y * screenWidth)) = iteration;
         }
 }

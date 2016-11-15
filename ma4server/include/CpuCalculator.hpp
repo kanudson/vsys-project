@@ -31,6 +31,11 @@ class CpuCalculator :
 {
 public:
     void calculate() override;
+
+private:
+    void naive();
+    void pointerAccses();
+    void openmp();
 };
 
 #endif // ma4server_CpuCalculator_h__
