@@ -29,10 +29,10 @@
 
 #include <SDL2/SDL.h>
 
-class ServerProcess : public IProcess
+class ClientProcess : public IProcess
 {
 public:
-    ServerProcess(StringVector& args)
+    ClientProcess(StringVector& args)
         : IProcess(args)
     {}
 
@@ -41,9 +41,11 @@ public:
     int32_t shutdown() override;
 
 private:
-    static constexpr int factor = 2;
+    static constexpr int factor = 1;
     const int screenWidth = 3840 * factor;
     const int screenHeight = 2160 * factor;
+
+    bool useSdl = false;
 
     //  1080p is ~2.25x of 720p
     //
@@ -67,7 +69,8 @@ private:
 
     void processEvents();
     void processImageSdl(const DataVector& data);
-    void processImagePgm(const DataVector& data, std::string filename);
+    void processImagePgmAscii(const DataVector& data, std::string filename);
+    void processImagePgmBinary(const DataVector& data, std::string filename);
 };
 
 #endif // mavsys_ServerProcess_h__

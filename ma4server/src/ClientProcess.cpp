@@ -20,36 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <ServerProcess.hpp>
+#include <ClientProcess.hpp>
 #include <CpuCalculator.hpp>
 #include <ma4lib/TimeMeasure.hpp>
 
 #include <boost/thread.hpp>
 #include <fstream>
+#include <algorithm>
 
-const char* pgmFile = "imgout.pgm";
+const char* pgmFileAscii = "imgascii.pgm";
+const char* pgmFileBinary = "imgbin.pgm";
 
-int32_t ServerProcess::init()
+int32_t ClientProcess::init()
 {
-    if (SDL_Init(SDL_INIT_VIDEO) != 0)
-        return 1;
+    if (useSdl)
+    {
+        if (SDL_Init(SDL_INIT_VIDEO) != 0)
+            return 1;
 
-    window_ = SDL_CreateWindow("ma4vsys - Mandelbrot",
-                     SDL_WINDOWPOS_CENTERED,
-                     SDL_WINDOWPOS_CENTERED,
-                     screenWidth, screenHeight,
-                     0);
-    if (!window_)
-        return 2;
+        window_ = SDL_CreateWindow("ma4vsys - Mandelbrot",
+                                   SDL_WINDOWPOS_CENTERED,
+                                   SDL_WINDOWPOS_CENTERED,
+                                   screenWidth, screenHeight,
+                                   0);
+        if (!window_)
+            return 2;
 
-    render_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED);
-    if (!render_)
-        return 4;
-
+        render_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED);
+        if (!render_)
+            return 4;
+    }
     return 0;
 }
 
-int32_t ServerProcess::run()
+int32_t ClientProcess::run()
 {
     std::cout << "running shit" << std::endl;
 
@@ -57,31 +61,38 @@ int32_t ServerProcess::run()
         std::cout << str.c_str() << std::endl;
 
     auto imgdata = createImage();
-    //processImageSdl(imgdata);
-    processImagePgm(imgdata, pgmFile);
+    processImagePgmAscii(imgdata, pgmFileAscii);
+    processImagePgmBinary(imgdata, pgmFileBinary);
 
-    keepRunning_ = false;
-    do
+    if (useSdl)
     {
-        auto time = boost::posix_time::milliseconds(5);
-        boost::this_thread::sleep(time);
+        //processImageSdl(imgdata);
+        keepRunning_ = false;
+        do
+        {
+            auto time = boost::posix_time::milliseconds(5);
+            boost::this_thread::sleep(time);
 
-        processEvents();
-        SDL_RenderPresent(render_);
-    } while (keepRunning_);
+            processEvents();
+            SDL_RenderPresent(render_);
+        } while (keepRunning_);
+    }
 
     return 42;
 }
 
-int32_t ServerProcess::shutdown()
+int32_t ClientProcess::shutdown()
 {
-    SDL_DestroyRenderer(render_);
-    SDL_DestroyWindow(window_);
-    SDL_Quit();
+    if (useSdl)
+    {
+        SDL_DestroyRenderer(render_);
+        SDL_DestroyWindow(window_);
+        SDL_Quit();
+    }
     return 0;
 }
 
-void ServerProcess::processEvents()
+void ClientProcess::processEvents()
 {
     SDL_Event e;
     while (SDL_PollEvent(&e))
@@ -108,7 +119,7 @@ void ServerProcess::processEvents()
             case SDLK_p:
                 {
                     auto data = createImage();
-                    processImagePgm(data, pgmFile);
+                    processImagePgmAscii(data, pgmFileAscii);
                 }
 
             default:
@@ -118,7 +129,7 @@ void ServerProcess::processEvents()
     }
 }
 
-DataVector ServerProcess::createImage()
+DataVector ClientProcess::createImage()
 {
     const int iterations = 0xFF;
 
@@ -140,7 +151,7 @@ DataVector ServerProcess::createImage()
     return calc.getData();
 }
 
-void ServerProcess::processImageSdl(const DataVector& data)
+void ClientProcess::processImageSdl(const DataVector& data)
 {
     std::cout << "processImageSdl... ";
 
@@ -170,7 +181,7 @@ void ServerProcess::processImageSdl(const DataVector& data)
     std::cout << "(took " << duration.count() << "ms)\n";
 }
 
-void ServerProcess::processImagePgm(const DataVector& data, std::string filename)
+void ClientProcess::processImagePgmAscii(const DataVector& data, std::string filename)
 {
     std::cout << "processImagePgm...";
 
@@ -185,6 +196,35 @@ void ServerProcess::processImagePgm(const DataVector& data, std::string filename
 
         for (auto& value : data)
             file << value << "\n";
+    };
+
+    auto duration = measureTime<boost::chrono::milliseconds>(lambda);
+    std::cout << "(took " << duration.count() << "ms)\n";
+}
+
+void ClientProcess::processImagePgmBinary(const DataVector& data, std::string filename)
+{
+    std::cout << "processImagePgm...";
+
+    auto lambda = [&]()
+    {
+        std::fstream file(filename, std::ios::out);
+
+        file << "P5\n";
+        file << screenWidth << "\n";
+        file << screenHeight << "\n";
+        file << static_cast<int>(255) << "\n";
+
+        std::vector<char> buffer(screenHeight * screenWidth * 2);
+        auto iter = buffer.begin();
+
+        for (auto& value : data)
+        {
+            *iter++ = std::max(std::min(value, 0xFF), 0);
+            *iter++ = '\n';
+        }
+
+        file.write(buffer.data(), buffer.size());
     };
 
     auto duration = measureTime<boost::chrono::milliseconds>(lambda);
