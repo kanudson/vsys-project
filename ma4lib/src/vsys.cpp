@@ -25,6 +25,11 @@
 #include <iostream>
 #include <string>
 
+using namespace boost::property_tree;
+
+const char* CONFIG_SERVER_FILENAME = "server.conf";
+const char* CONFIG_CLIENT_FILENAME = "client.conf";
+
 StringVector parseArguments(int argc, char* argv[])
 {
     std::vector<std::string> args(argc);
@@ -33,4 +38,18 @@ StringVector parseArguments(int argc, char* argv[])
         args[i] = std::string(argv[i]);
 
     return args;
+}
+
+ptree ReadServerConfig()
+{
+    ptree tree;
+    ini_parser::read_ini(CONFIG_SERVER_FILENAME, tree);
+    return tree;
+}
+
+ptree ReadClientConfig()
+{
+    ptree tree;
+    ini_parser::read_ini(CONFIG_CLIENT_FILENAME, tree);
+    return tree;
 }

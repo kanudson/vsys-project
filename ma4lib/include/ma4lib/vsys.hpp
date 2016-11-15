@@ -23,6 +23,7 @@
 #ifndef mavsys_vsys_h__
 #define mavsys_vsys_h__
 
+//  C++ Headers
 #include <vector>
 #include <algorithm>
 #include <thread>
@@ -30,11 +31,21 @@
 #include <memory>
 #include <iostream>
 
+//  C Headers
 #include <cstdint>
+
+//  3rd Party
+#include <boost/property_tree/ini_parser.hpp>
 
 typedef std::vector<std::string> StringVector;
 typedef std::vector<int32_t> DataVector;
 
+extern const char* CONFIG_SERVER_FILENAME;
+extern const char* CONFIG_CLIENT_FILENAME;
+
 StringVector parseArguments(int argc, char* argv[]);
+
+boost::property_tree::ptree ReadServerConfig();
+boost::property_tree::ptree ReadClientConfig();
 
 #endif // mavsys_vsys_h__
