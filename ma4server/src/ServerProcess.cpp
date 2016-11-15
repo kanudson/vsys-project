@@ -25,6 +25,9 @@
 #include <ma4lib/TimeMeasure.hpp>
 
 #include <boost/thread.hpp>
+#include <fstream>
+
+const char* pgmFile = "imgout.pgm";
 
 int32_t ServerProcess::init()
 {
@@ -53,9 +56,11 @@ int32_t ServerProcess::run()
     for (const std::string& str : args_)
         std::cout << str.c_str() << std::endl;
 
-    processImage();
+    auto imgdata = createImage();
+    //processImageSdl(imgdata);
+    processImagePgm(imgdata, pgmFile);
 
-    keepRunning_ = true;
+    keepRunning_ = false;
     do
     {
         auto time = boost::posix_time::milliseconds(5);
@@ -93,9 +98,18 @@ void ServerProcess::processEvents()
                 keepRunning_ = false;
                 break;
 
-            case SDLK_r:
-                processImage();
+            case SDLK_s:
+                {
+                    auto data = createImage();
+                    processImageSdl(data);
+                }
                 break;
+
+            case SDLK_p:
+                {
+                    auto data = createImage();
+                    processImagePgm(data, pgmFile);
+                }
 
             default:
                 break;
@@ -104,11 +118,11 @@ void ServerProcess::processEvents()
     }
 }
 
-void ServerProcess::processImage()
+DataVector ServerProcess::createImage()
 {
     const int iterations = 0xFF;
 
-    std::cout << "calc...";
+    std::cout << "createImage()... ";
     CpuCalculator calc;
     calc.setScreenWidth(screenWidth);
     calc.setScreenHeight(screenHeight);
@@ -121,12 +135,18 @@ void ServerProcess::processImage()
     typedef void (CpuCalculator::*FuncPtr)();
     constexpr FuncPtr fkt = &CpuCalculator::calculate;
     auto duration = measureTime<boost::chrono::milliseconds>(calc, fkt);
-    std::cout << "(took " << duration.count() << "ms)\t";
+    std::cout << "(took " << duration.count() << "ms)\n";
 
+    return calc.getData();
+}
+
+void ServerProcess::processImageSdl(const DataVector& data)
+{
+    std::cout << "processImageSdl... ";
+
+    //  casted into a lambda to enable easier time measuring
     auto lambda = [&]()
     {
-        std::cout << "processing... ";
-        DataVector data = calc.getData();
         for (int y = 0; y < screenHeight; ++y)
             for (int x = 0; x < screenWidth; ++x)
             {
@@ -146,7 +166,27 @@ void ServerProcess::processImage()
             }
     };
 
-    duration = measureTime<boost::chrono::milliseconds>(lambda);
-    std::cout << "(took " << duration.count() << "ms)\t";
-    std::cout << "done!\n";
+    auto duration = measureTime<boost::chrono::milliseconds>(lambda);
+    std::cout << "(took " << duration.count() << "ms)\n";
+}
+
+void ServerProcess::processImagePgm(const DataVector& data, std::string filename)
+{
+    std::cout << "processImagePgm...";
+
+    auto lambda = [&]()
+    {
+        std::fstream file(filename, std::ios::out);
+
+        file << "P2\n";
+        file << screenWidth << "\n";
+        file << screenHeight << "\n";
+        file << static_cast<int>(255) << "\n";
+
+        for (auto& value : data)
+            file << value << "\n";
+    };
+
+    auto duration = measureTime<boost::chrono::milliseconds>(lambda);
+    std::cout << "(took " << duration.count() << "ms)\n";
 }

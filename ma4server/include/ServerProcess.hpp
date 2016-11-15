@@ -25,6 +25,7 @@
 
 #include <ma4lib/vsys.hpp>
 #include <ma4lib/IProcess.hpp>
+#include <ma4lib/ICalculator.hpp>
 
 #include <SDL2/SDL.h>
 
@@ -40,6 +41,10 @@ public:
     int32_t shutdown() override;
 
 private:
+    static constexpr int factor = 2;
+    const int screenWidth = 3840 * factor;
+    const int screenHeight = 2160 * factor;
+
     //  1080p is ~2.25x of 720p
     //
     //  ~1050ms
@@ -50,16 +55,19 @@ private:
 
     //  ~470ms
     //  921,600
-    const int screenWidth = 1280;
-    const int screenHeight = 720;
+    //const int screenWidth = 1280;
+    //const int screenHeight = 720;
 
     SDL_Window* window_ = nullptr;
     SDL_Renderer* render_ = nullptr;
     SDL_Surface* surface_ = nullptr;
     bool keepRunning_;
 
+    DataVector createImage();
+
     void processEvents();
-    void processImage();
+    void processImageSdl(const DataVector& data);
+    void processImagePgm(const DataVector& data, std::string filename);
 };
 
 #endif // mavsys_ServerProcess_h__

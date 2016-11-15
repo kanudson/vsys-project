@@ -31,6 +31,12 @@ class CpuCalculator :
 {
 public:
     void calculate() override;
+
+private:
+    int32_t iter_mandel(int32_t cre, int32_t cim);
+
+    void run();
+    void run_openmp();
 };
 
 #endif // ma4server_CpuCalculator_h__
