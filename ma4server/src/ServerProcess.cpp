@@ -35,7 +35,7 @@ int32_t ServerProcess::init()
                      SDL_WINDOWPOS_CENTERED,
                      SDL_WINDOWPOS_CENTERED,
                      screenWidth, screenHeight,
-                     0);
+                     0/*SDL_WINDOW_BORDERLESS*/);
     if (!window_)
         return 2;
 
@@ -53,6 +53,8 @@ int32_t ServerProcess::run()
     for (const std::string& str : args_)
         std::cout << str.c_str() << std::endl;
 
+    SDL_SetRenderDrawColor(render_, 0x00, 0x00, 0x00, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(render_);
     processImage();
 
     keepRunning_ = true;
@@ -106,23 +108,30 @@ void ServerProcess::processEvents()
 
 void ServerProcess::processImage()
 {
-    const int iterations = 0xFF;
+    constexpr int iterations = 1000;
+    constexpr float factor = iterations / 255.f;
 
     std::cout << "calc...";
     CpuCalculator calc;
     calc.setScreenWidth(screenWidth);
     calc.setScreenHeight(screenHeight);
     calc.setMaxIterations(iterations);
-    calc.setOffsetTop(1.0f);
-    calc.setOffsetBottom(-1.0f);
-    calc.setOffsetLeft(-2.5f);
-    calc.setOffsetRight(1.0f);
+    //calc.setOffsetTop(1.0f);
+    //calc.setOffsetBottom(-1.0f);
+    //calc.setOffsetLeft(-2.5f);
+    //calc.setOffsetRight(1.0f);
+    calc.setOffsetTop(0.72f / 2.f);
+    calc.setOffsetBottom(0.0f);
+    calc.setOffsetLeft(-1.0f);
+    calc.setOffsetRight(-1.0f + (1.28f / 2));
 
     typedef void (CpuCalculator::*FuncPtr)();
     constexpr FuncPtr fkt = &CpuCalculator::calculate;
     auto duration = measureTime<boost::chrono::milliseconds>(calc, fkt);
     std::cout << "(took " << duration.count() << "ms)\t";
 
+    //  use a lambda for now to measure time
+    //  TODO    use a function instead
     auto lambda = [&]()
     {
         std::cout << "processing... ";
@@ -130,12 +139,10 @@ void ServerProcess::processImage()
         for (int y = 0; y < screenHeight; ++y)
             for (int x = 0; x < screenWidth; ++x)
             {
-                DataVector::value_type fullcolor = data[(screenWidth * y) + x];
+                DataVector::value_type fullcolor = data[(screenWidth * y) + x] / factor;
 
                 uint8_t color;
-                if (fullcolor > 0x000000FF)
-                    color = 0xFF;
-                else if (fullcolor < 0)
+                if (fullcolor < 0)
                     color = 0;
                 else
                     color = static_cast<uint8_t>(fullcolor);
@@ -146,7 +153,30 @@ void ServerProcess::processImage()
             }
     };
 
-    duration = measureTime<boost::chrono::milliseconds>(lambda);
+    auto processWithPointer = [&]()
+    {
+        std::cout << "processing... ";
+        DataVector data = calc.getData();
+        DataVector::value_type* ptr = data.data();
+        for (int y = 0; y < screenHeight; ++y)
+            for (int x = 0; x < screenWidth; ++x)
+            {
+                DataVector::value_type fullcolor = *ptr++ / factor;
+
+                uint8_t color;
+                if (fullcolor < 0)
+                    color = 0;
+                else
+                    color = static_cast<uint8_t>(fullcolor);
+
+                //std::cout << std::to_string(color) << "\n\n";
+                SDL_SetRenderDrawColor(render_, color, color, color, SDL_ALPHA_OPAQUE);
+                SDL_RenderDrawPoint(render_, x, y);
+            }
+    };
+
+    //duration = measureTime<boost::chrono::milliseconds>(lambda);
+    duration = measureTime<boost::chrono::milliseconds>(processWithPointer);
     std::cout << "(took " << duration.count() << "ms)\t";
     std::cout << "done!\n";
 }
