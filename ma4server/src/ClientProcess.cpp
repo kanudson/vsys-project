@@ -188,14 +188,17 @@ void ClientProcess::processImagePgmAscii(const DataVector& data, std::string fil
     auto lambda = [&]()
     {
         std::fstream file(filename, std::ios::out);
+        std::stringstream ss;
 
-        file << "P2\n";
-        file << screenWidth << "\n";
-        file << screenHeight << "\n";
-        file << static_cast<int>(255) << "\n";
-
+        //  fill buffer with data
+        ss << "P2\n";
+        ss << screenWidth << "\n";
+        ss << screenHeight << "\n";
+        ss << static_cast<int>(255) << "\n"
         for (auto& value : data)
-            file << value << "\n";
+            ss << value << "\n";
+
+        file << ss.str();
     };
 
     auto duration = measureTime<boost::chrono::milliseconds>(lambda);
