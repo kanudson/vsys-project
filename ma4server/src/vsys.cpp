@@ -42,12 +42,18 @@ int32_t run(IProcess& proc)
 
     if (auto erg = proc.init())
     {
-        std::cout << "server init failed with code " << erg << std::endl;
-        throw std::runtime_error("server init failed");
+        std::cout << "init failed with code " << erg << std::endl;
+        throw std::runtime_error("init failed");
     }
 
     res = proc.run();
-    proc.shutdown();
+
+    if (auto erg = proc.shutdown())
+    {
+        std::cout << "shutdown failed with code " << erg << std::endl;
+        throw std::runtime_error("shutdown failed");
+    }
+
     return res;
 }
 
