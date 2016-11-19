@@ -49,11 +49,12 @@ private:
 
     //  1080p is ~2.25x of 720p
     //
-    //  ~1050ms
+    //  ~1050ms calculating
+    //  ~525ms processing
     //  2,073,600
     //
-    //const int screenWidth = 1920;
-    //const int screenHeight = 1080;
+    const int screenWidth = 1920;
+    const int screenHeight = 1080;
 
     //  ~470ms
     //  921,600

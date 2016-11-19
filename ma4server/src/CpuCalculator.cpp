@@ -24,57 +24,125 @@
 
 void CpuCalculator::calculate()
 {
+    //naive();
+    //pointerAccses();
+    openmp();
+}
+
+void CpuCalculator::naive()
+{
     data.resize(screenWidth * screenHeight);
     run();
 }
 
-int32_t CpuCalculator::iter_mandel(int cre, int cim)
-{
     const float stepHorizontal = (offsetRight - offsetLeft) / static_cast<float>(screenWidth);
     const float stepVertical = (offsetTop - offsetBottom) / static_cast<float>(screenHeight);
 
-    //  Pixel (0,0) is top left!
-    const float re = offsetLeft + (stepHorizontal * cre);
-    const float im = offsetTop - (stepVertical * cim);
-
-    float r = 0.0f;
-    float i = 0.0f;
-    int32_t iteration = 0;
-
-    //  while (x*x + y*y < 2*2  AND  iteration < max_iteration) {
-    auto rs = r * r;
-    auto is = i * i;
-    while (rs + is < 4 && iteration < maxIterations)
-    {
-        float xtemp = rs - is + re;
-        i = 2 * r * i + im;
-        r = xtemp;
-        ++iteration;
-
-        //  refresh data for next iterations
-        rs = r * r;
-        is = i * i;
-    }
-
-    return iteration;
-}
-
-void CpuCalculator::run()
-{
     for (int y = 0; y < screenHeight; ++y)
         for (int x = 0; x < screenWidth; ++x)
         {
-            auto iteration = iter_mandel(x, y);
+            //  Pixel (0,0) is top left!
+            const float re = offsetLeft + (stepHorizontal * x);
+            const float im = offsetTop - (stepVertical * y);
+
+            float r = 0.0f;
+            float i = 0.0f;
+            int32_t iteration = 0;
+
+            //  while (x*x + y*y < 2*2  AND  iteration < max_iteration) {
+            auto rs = r * r;
+            auto is = i * i;
+            while (rs + is < 4 && iteration < maxIterations)
+            {
+                float xtemp = rs - is + re;
+                i = 2 * r * i + im;
+                r = xtemp;
+                ++iteration;
+
+                //  refresh data for next iterations
+                rs = r * r;
+                is = i * i;
+            }
+
             data[(screenWidth * y) + x] = iteration;
         }
 }
 
-void CpuCalculator::run_openmp()
+void CpuCalculator::pointerAccses()
 {
+    data.resize(screenWidth * screenHeight);
+    DataVector::value_type* ptr = data.data();
+
+    const float stepHorizontal = (offsetRight - offsetLeft) / static_cast<float>(screenWidth);
+    const float stepVertical = (offsetTop - offsetBottom) / static_cast<float>(screenHeight);
+
     for (int y = 0; y < screenHeight; ++y)
         for (int x = 0; x < screenWidth; ++x)
         {
-            auto iteration = iter_mandel(x, y);
-            data[(screenWidth * y) + x] = iteration;
+            //  Pixel (0,0) is top left!
+            const float re = offsetLeft + (stepHorizontal * x);
+            const float im = offsetTop - (stepVertical * y);
+
+            float r = 0.0f;
+            float i = 0.0f;
+            int32_t iteration = 0;
+
+            //  while (x*x + y*y < 2*2  AND  iteration < max_iteration) {
+            auto rs = r * r;
+            auto is = i * i;
+            while (rs + is < 4 && iteration < maxIterations)
+            {
+                float xtemp = rs - is + re;
+                i = 2 * r * i + im;
+                r = xtemp;
+                ++iteration;
+
+                //  refresh data for next iterations
+                rs = r * r;
+                is = i * i;
+            }
+
+            *ptr++ = iteration;
+        }
+}
+
+void CpuCalculator::openmp()
+{
+    data.resize(screenWidth * screenHeight);
+    DataVector::value_type* ptr = data.data();
+
+    const float stepHorizontal = (offsetRight - offsetLeft) / static_cast<float>(screenWidth);
+    const float stepVertical = (offsetTop - offsetBottom) / static_cast<float>(screenHeight);
+
+#pragma omp parallel for schedule(static, 40)
+    for (int y = 0; y < screenHeight; ++y)
+//  can be used with intel compiler
+//#pragma omp parallel for simd schedule(static, 4)
+        for (int x = 0; x < screenWidth; ++x)
+        {
+            //  Pixel (0,0) is top left!
+            const float re = offsetLeft + (stepHorizontal * x);
+            const float im = offsetTop - (stepVertical * y);
+
+            float r = 0.0f;
+            float i = 0.0f;
+            int32_t iteration = 0;
+
+            //  while (x*x + y*y < 2*2  AND  iteration < max_iteration) {
+            auto rs = r * r;
+            auto is = i * i;
+            while (rs + is < 4 && iteration < maxIterations)
+            {
+                float xtemp = rs - is + re;
+                i = 2 * r * i + im;
+                r = xtemp;
+                ++iteration;
+
+                //  refresh data for next iterations
+                rs = r * r;
+                is = i * i;
+            }
+
+            *(ptr + x + (y * screenWidth)) = iteration;
         }
 }
