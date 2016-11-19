@@ -194,7 +194,7 @@ void ClientProcess::processImagePgmAscii(const DataVector& data, std::string fil
         ss << "P2\n";
         ss << screenWidth << "\n";
         ss << screenHeight << "\n";
-        ss << static_cast<int>(255) << "\n"
+        ss << static_cast<int>(255) << "\n";
         for (auto& value : data)
             ss << value << "\n";
 

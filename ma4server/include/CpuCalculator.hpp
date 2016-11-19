@@ -33,8 +33,9 @@ public:
     void calculate() override;
 
 private:
-    void naive();
-    void pointerAccses();
-    void openmp();};
+    int32_t iter_mandel(int cre, int cim);
+    void run();
+    void run_openmp();
+};
 
 #endif // ma4server_CpuCalculator_h__

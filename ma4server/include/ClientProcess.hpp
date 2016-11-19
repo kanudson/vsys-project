@@ -53,8 +53,6 @@ private:
     //  ~525ms processing
     //  2,073,600
     //
-    const int screenWidth = 1920;
-    const int screenHeight = 1080;
 
     //  ~470ms
     //  921,600
