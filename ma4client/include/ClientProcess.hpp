@@ -27,8 +27,6 @@
 #include <ma4lib/IProcess.hpp>
 #include <ma4lib/ICalculator.hpp>
 
-#include <SDL2/SDL.h>
-
 class ClientProcess : public IProcess
 {
 public:
@@ -45,8 +43,6 @@ private:
     const int screenWidth = 3840 * factor;
     const int screenHeight = 2160 * factor;
 
-    bool useSdl = false;
-
     //  1080p is ~2.25x of 720p
     //
     //  ~1050ms calculating
@@ -59,15 +55,10 @@ private:
     //const int screenWidth = 1280;
     //const int screenHeight = 720;
 
-    SDL_Window* window_ = nullptr;
-    SDL_Renderer* render_ = nullptr;
-    SDL_Surface* surface_ = nullptr;
     bool keepRunning_;
 
     DataVector createImage();
 
-    void processEvents();
-    void processImageSdl(const DataVector& data);
     void processImagePgmAscii(const DataVector& data, std::string filename);
     void processImagePgmBinary(const DataVector& data, std::string filename);
 };

@@ -5,7 +5,7 @@ PROJECT(ma4server)
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
     ${MA4LIB_INCLUDE_DIR}
-    ${SDL2_INC}
+    #${SDL2_INC}
     ${BOOST_INCLUDEDIR}
 )
 
@@ -16,7 +16,7 @@ add_executable (ma4server ${SOURCES} ${HEADERSPP} ${HEADERS})
 
 target_link_libraries (ma4server ma4lib)
 if (WIN32)
-    target_link_libraries (ma4server ${SDL2_LIB} ${SDL2_MAINLIB})
+    #target_link_libraries (ma4server ${SDL2_LIB} ${SDL2_MAINLIB})
     target_link_libraries (ma4server ${Boost_LIBRARIES})
 endif (WIN32)
 

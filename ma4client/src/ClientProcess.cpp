@@ -26,6 +26,7 @@
 #include <boost/thread.hpp>
 #include <fstream>
 #include <algorithm>
+
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
 using boost::asio::ip::tcp;
@@ -33,44 +34,31 @@ using boost::asio::ip::tcp;
 const char* pgmFileAscii = "imgascii.pgm";
 const char* pgmFileBinary = "imgbin.pgm";
 
+const char* tcpHostname = "localhost";
+const char* tcpPort = "40123";
+
 int32_t ClientProcess::init()
 {
-    if (useSdl)
-    {
-        if (SDL_Init(SDL_INIT_VIDEO) != 0)
-            return 1;
-
-        window_ = SDL_CreateWindow("ma4vsys - Mandelbrot",
-                                   SDL_WINDOWPOS_CENTERED,
-                                   SDL_WINDOWPOS_CENTERED,
-                                   screenWidth, screenHeight,
-                                   0);
-        if (!window_)
-            return 2;
-
-        render_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED);
-        if (!render_)
-            return 4;
-    }
     return 0;
 }
 
 int32_t ClientProcess::run()
 {
-    std::cout << "running client, connecting..." << std::endl;
+    std::cout << "running client..." << std::endl;
 
     boost::asio::io_service ioservice;
-
     tcp::resolver resolver(ioservice);
-    tcp::resolver::query query(tcp::v4(), "localhost", "40123");
+    tcp::resolver::query query(tcp::v4(), tcpHostname, tcpPort);
     const tcp::resolver::iterator iter = resolver.resolve(query), end;
 
+    std::cout << "looking for hosts... found:\n";
     for (auto loc = iter; loc != end; loc++)
     {
         boost::asio::ip::tcp::endpoint endpoint = *loc;
-        std::cout << endpoint << std::endl;
+        std::cout << "\t" << endpoint << std::endl;
     }
 
+    std::cout << "connecting...\n";
     tcp::socket socket(ioservice);
     boost::asio::connect(socket, iter);
 
@@ -88,7 +76,6 @@ int32_t ClientProcess::run()
         std::cout.write(buf.data(), len);
     }
 
-    //  nop nop nop
     return 0;
 
     for (const std::string& str : args_)
@@ -98,69 +85,12 @@ int32_t ClientProcess::run()
     processImagePgmAscii(imgdata, pgmFileAscii);
     processImagePgmBinary(imgdata, pgmFileBinary);
 
-    if (useSdl)
-    {
-        //processImageSdl(imgdata);
-        keepRunning_ = false;
-        do
-        {
-            auto time = boost::posix_time::milliseconds(5);
-            boost::this_thread::sleep(time);
-
-            processEvents();
-            SDL_RenderPresent(render_);
-        } while (keepRunning_);
-    }
-
     return 42;
 }
 
 int32_t ClientProcess::shutdown()
 {
-    if (useSdl)
-    {
-        SDL_DestroyRenderer(render_);
-        SDL_DestroyWindow(window_);
-        SDL_Quit();
-    }
     return 0;
-}
-
-void ClientProcess::processEvents()
-{
-    SDL_Event e;
-    while (SDL_PollEvent(&e))
-    {
-        if (e.type == SDL_QUIT)
-        {
-            keepRunning_ = false;
-        }
-        else if (e.type == SDL_KEYDOWN)
-        {
-            switch (e.key.keysym.sym)
-            {
-            case SDLK_ESCAPE:
-                keepRunning_ = false;
-                break;
-
-            case SDLK_s:
-                {
-                    auto data = createImage();
-                    processImageSdl(data);
-                }
-                break;
-
-            case SDLK_p:
-                {
-                    auto data = createImage();
-                    processImagePgmAscii(data, pgmFileAscii);
-                }
-
-            default:
-                break;
-            }
-        }
-    }
 }
 
 DataVector ClientProcess::createImage()
@@ -186,36 +116,6 @@ DataVector ClientProcess::createImage()
     DataVector res;
     return res;
 
-}
-
-void ClientProcess::processImageSdl(const DataVector& data)
-{
-    std::cout << "processImageSdl... ";
-
-    //  casted into a lambda to enable easier time measuring
-    auto lambda = [&]()
-    {
-        for (int y = 0; y < screenHeight; ++y)
-            for (int x = 0; x < screenWidth; ++x)
-            {
-                DataVector::value_type fullcolor = data[(screenWidth * y) + x];
-
-                uint8_t color;
-                if (fullcolor > 0x000000FF)
-                    color = 0xFF;
-                else if (fullcolor < 0)
-                    color = 0;
-                else
-                    color = static_cast<uint8_t>(fullcolor);
-
-                //std::cout << std::to_string(color) << "\n\n";
-                SDL_SetRenderDrawColor(render_, color, color, color, SDL_ALPHA_OPAQUE);
-                SDL_RenderDrawPoint(render_, x, y);
-            }
-    };
-
-    auto duration = measureTime<boost::chrono::milliseconds>(lambda);
-    std::cout << "(took " << duration.count() << "ms)\n";
 }
 
 void ClientProcess::processImagePgmAscii(const DataVector& data, std::string filename)

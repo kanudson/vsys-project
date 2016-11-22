@@ -43,14 +43,16 @@ int32_t ServerProcess::init()
 int32_t ServerProcess::run()
 {
     std::cout << "server is up, waiting for connections..." << std::endl;
+    const std::string msg = "hello world from server";
 
     tcp::acceptor acceptor(ioservice_, tcp::endpoint(tcp::v4(), HOSTPORT));
     for (;;)
     {
+        //  wait for clients to connect
         tcp::socket socket(ioservice_);
         acceptor.accept(socket);
 
-        std::string msg = "hello world frpm server";
+        //  process client request
         boost::system::error_code ignoredError;
         boost::asio::write(socket, boost::asio::buffer(msg), ignoredError);
     }
