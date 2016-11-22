@@ -20,66 +20,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef ma4lib_ICalculator_h__
-#define ma4lib_ICalculator_h__
+#include <ServerProcess.hpp>
+#include <ma4lib/TimeMeasure.hpp>
+#include <CpuCalculator.hpp>
 
-#include <ma4lib/vsys.hpp>
+#include <boost/thread.hpp>
+#include <boost/asio.hpp>
+#include <fstream>
+#include <algorithm>
 
-class ICalculator
+using boost::asio::ip::tcp;
+constexpr int HOSTPORT = 40123;
+
+const char* pgmFileAscii = "imgascii.pgm";
+const char* pgmFileBinary = "imgbin.pgm";
+
+int32_t ServerProcess::init()
 {
-public:
-    virtual void calculate() = 0;
-    virtual float calculate(float re, float im) = 0;
+    return 0;
+}
 
-    virtual ~ICalculator()
-    {}
+int32_t ServerProcess::run()
+{
+    std::cout << "server is up, waiting for connections..." << std::endl;
 
-    void setScreenWidth(int32_t val)
+    tcp::acceptor acceptor(ioservice_, tcp::endpoint(tcp::v4(), HOSTPORT));
+    for (;;)
     {
-        screenWidth = val;
+        tcp::socket socket(ioservice_);
+        acceptor.accept(socket);
+
+        std::string msg = "hello world frpm server";
+        boost::system::error_code ignoredError;
+        boost::asio::write(socket, boost::asio::buffer(msg), ignoredError);
     }
 
-    void setScreenHeight(int32_t val)
-    {
-        screenHeight = val;
-    }
+    return 42;
+}
 
-    void setOffsetLeft(float val)
-    {
-        offsetLeft = val;
-    }
-
-    void setOffsetRight(float val)
-    {
-        offsetRight = val;
-    }
-
-    void setOffsetTop(float val)
-    {
-        offsetTop = val;
-    }
-
-    void setOffsetBottom(float val)
-    {
-        offsetBottom = val;
-    }
-
-    void setMaxIterations(int32_t val)
-    {
-        maxIterations = val;
-    }
-
-    DataVector getData()
-    {
-        return data;
-    }
-
-protected:
-    DataVector data;
-
-    int32_t screenWidth, screenHeight;
-    float offsetLeft, offsetRight, offsetTop, offsetBottom;
-    int32_t maxIterations;
-};
-
-#endif // ma4lib_ICalculator_h__
+int32_t ServerProcess::shutdown()
+{
+    return 0;
+}

@@ -20,66 +20,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef ma4lib_ICalculator_h__
-#define ma4lib_ICalculator_h__
+#ifndef mavsys_ServerProcess_h__
+#define mavsys_ServerProcess_h__
 
 #include <ma4lib/vsys.hpp>
+#include <ma4lib/IProcess.hpp>
+#include <ma4lib/ICalculator.hpp>
+#include <boost/asio.hpp>
 
-class ICalculator
+class ServerProcess : public IProcess
 {
 public:
-    virtual void calculate() = 0;
-    virtual float calculate(float re, float im) = 0;
-
-    virtual ~ICalculator()
+    ServerProcess(StringVector& args)
+        : IProcess(args)
     {}
 
-    void setScreenWidth(int32_t val)
-    {
-        screenWidth = val;
-    }
+    int32_t init() override;
+    int32_t run() override;
+    int32_t shutdown() override;
 
-    void setScreenHeight(int32_t val)
-    {
-        screenHeight = val;
-    }
+private:
+    boost::asio::io_service ioservice_;
 
-    void setOffsetLeft(float val)
-    {
-        offsetLeft = val;
-    }
-
-    void setOffsetRight(float val)
-    {
-        offsetRight = val;
-    }
-
-    void setOffsetTop(float val)
-    {
-        offsetTop = val;
-    }
-
-    void setOffsetBottom(float val)
-    {
-        offsetBottom = val;
-    }
-
-    void setMaxIterations(int32_t val)
-    {
-        maxIterations = val;
-    }
-
-    DataVector getData()
-    {
-        return data;
-    }
-
-protected:
-    DataVector data;
-
-    int32_t screenWidth, screenHeight;
-    float offsetLeft, offsetRight, offsetTop, offsetBottom;
-    int32_t maxIterations;
+    bool keepRunning_;
 };
 
-#endif // ma4lib_ICalculator_h__
+#endif // mavsys_ServerProcess_h__

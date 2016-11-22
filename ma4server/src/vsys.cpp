@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 #include <ma4lib/vsys.hpp>
-#include <ClientProcess.hpp>
+#include <ServerProcess.hpp>
 
 #include <iostream>
 #include <string>
@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
     int32_t res = 0;
     try
     {
-        ClientProcess proc(args);
+        ServerProcess proc(args);
         res = run(proc);
     }
     catch (std::exception e)

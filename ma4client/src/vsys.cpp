@@ -20,66 +20,60 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef ma4lib_ICalculator_h__
-#define ma4lib_ICalculator_h__
-
 #include <ma4lib/vsys.hpp>
+#include <ClientProcess.hpp>
 
-class ICalculator
+#include <iostream>
+#include <string>
+
+StringVector parseArguments(int argc, char* argv[])
 {
-public:
-    virtual void calculate() = 0;
-    virtual float calculate(float re, float im) = 0;
+    std::vector<std::string> args(argc);
 
-    virtual ~ICalculator()
-    {}
+    for (std::size_t i = 0; i < argc; ++i)
+        args[i] = std::string(argv[i]);
 
-    void setScreenWidth(int32_t val)
+    return args;
+}
+
+int32_t run(IProcess& proc)
+{
+    int32_t res = 0;
+
+    if (auto erg = proc.init())
     {
-        screenWidth = val;
+        std::cout << "init failed with code " << erg << std::endl;
+        throw std::runtime_error("init failed");
     }
 
-    void setScreenHeight(int32_t val)
+    res = proc.run();
+
+    if (auto erg = proc.shutdown())
     {
-        screenHeight = val;
+        std::cout << "shutdown failed with code " << erg << std::endl;
+        throw std::runtime_error("shutdown failed");
     }
 
-    void setOffsetLeft(float val)
+    return res;
+}
+
+int main(int argc, char* argv[])
+{
+    std::cout << "hello world, this is m4bin (vsys) <3\n";
+    auto args = parseArguments(argc, argv);
+
+    int32_t res = 0;
+    try
     {
-        offsetLeft = val;
+        ClientProcess proc(args);
+        res = run(proc);
+    }
+    catch (std::exception e)
+    {
+        std::cout << "std::exception caught\n" <<  e.what() << std::endl;
+        return -1;
     }
 
-    void setOffsetRight(float val)
-    {
-        offsetRight = val;
-    }
+    return res;
+}
 
-    void setOffsetTop(float val)
-    {
-        offsetTop = val;
-    }
-
-    void setOffsetBottom(float val)
-    {
-        offsetBottom = val;
-    }
-
-    void setMaxIterations(int32_t val)
-    {
-        maxIterations = val;
-    }
-
-    DataVector getData()
-    {
-        return data;
-    }
-
-protected:
-    DataVector data;
-
-    int32_t screenWidth, screenHeight;
-    float offsetLeft, offsetRight, offsetTop, offsetBottom;
-    int32_t maxIterations;
-};
-
-#endif // ma4lib_ICalculator_h__

@@ -21,12 +21,14 @@
 // SOFTWARE.
 
 #include <ClientProcess.hpp>
-#include <CpuCalculator.hpp>
 #include <ma4lib/TimeMeasure.hpp>
 
 #include <boost/thread.hpp>
 #include <fstream>
 #include <algorithm>
+#include <boost/array.hpp>
+#include <boost/asio.hpp>
+using boost::asio::ip::tcp;
 
 const char* pgmFileAscii = "imgascii.pgm";
 const char* pgmFileBinary = "imgbin.pgm";
@@ -55,7 +57,39 @@ int32_t ClientProcess::init()
 
 int32_t ClientProcess::run()
 {
-    std::cout << "running shit" << std::endl;
+    std::cout << "running client, connecting..." << std::endl;
+
+    boost::asio::io_service ioservice;
+
+    tcp::resolver resolver(ioservice);
+    tcp::resolver::query query(tcp::v4(), "localhost", "40123");
+    const tcp::resolver::iterator iter = resolver.resolve(query), end;
+
+    for (auto loc = iter; loc != end; loc++)
+    {
+        boost::asio::ip::tcp::endpoint endpoint = *loc;
+        std::cout << endpoint << std::endl;
+    }
+
+    tcp::socket socket(ioservice);
+    boost::asio::connect(socket, iter);
+
+    for (;;)
+    {
+        boost::array<char, 128> buf;
+        boost::system::error_code error;
+
+        size_t len = socket.read_some(boost::asio::buffer(buf), error);
+        if (error == boost::asio::error::eof)
+            break; // Connection closed cleanly by peer.
+        else if (error)
+            throw boost::system::system_error(error); // Some other error.
+
+        std::cout.write(buf.data(), len);
+    }
+
+    //  nop nop nop
+    return 0;
 
     for (const std::string& str : args_)
         std::cout << str.c_str() << std::endl;
@@ -134,21 +168,24 @@ DataVector ClientProcess::createImage()
     const int iterations = 0xFF;
 
     std::cout << "createImage()... ";
-    CpuCalculator calc;
-    calc.setScreenWidth(screenWidth);
-    calc.setScreenHeight(screenHeight);
-    calc.setMaxIterations(iterations);
-    calc.setOffsetTop(1.0f);
-    calc.setOffsetBottom(-1.0f);
-    calc.setOffsetLeft(-2.5f);
-    calc.setOffsetRight(1.0f);
+    //CpuCalculator calc;
+    //calc.setScreenWidth(screenWidth);
+    //calc.setScreenHeight(screenHeight);
+    //calc.setMaxIterations(iterations);
+    //calc.setOffsetTop(1.0f);
+    //calc.setOffsetBottom(-1.0f);
+    //calc.setOffsetLeft(-2.5f);
+    //calc.setOffsetRight(1.0f);
 
-    typedef void (CpuCalculator::*FuncPtr)();
-    constexpr FuncPtr fkt = &CpuCalculator::calculate;
-    auto duration = measureTime<boost::chrono::milliseconds>(calc, fkt);
-    std::cout << "(took " << duration.count() << "ms)\n";
+    //typedef void (CpuCalculator::*FuncPtr)();
+    //constexpr FuncPtr fkt = &CpuCalculator::calculate;
+    //auto duration = measureTime<boost::chrono::milliseconds>(calc, fkt);
+    //std::cout << "(took " << duration.count() << "ms)\n";
 
-    return calc.getData();
+    //return calc.getData();
+    DataVector res;
+    return res;
+
 }
 
 void ClientProcess::processImageSdl(const DataVector& data)

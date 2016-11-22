@@ -31,6 +31,7 @@ class CpuCalculator :
 {
 public:
     void calculate() override;
+    float calculate(float re, float im) override;
 
 private:
     int32_t iter_mandel(int cre, int cim);

@@ -30,6 +30,30 @@ void CpuCalculator::calculate()
     //run_openmp();
 }
 
+float CpuCalculator::calculate(float re, float im)
+{
+    float r = 0.0f;
+    float i = 0.0f;
+    int32_t iteration = 0;
+
+    //  while (x*x + y*y < 2*2  AND  iteration < max_iteration) {
+    auto rs = r * r;
+    auto is = i * i;
+    while (rs + is < 4 && iteration < maxIterations)
+    {
+        float xtemp = rs - is + re;
+        i = 2 * r * i + im;
+        r = xtemp;
+        ++iteration;
+
+        //  refresh data for next iterations
+        rs = r * r;
+        is = i * i;
+    }
+
+    return iteration;
+}
+
 void CpuCalculator::run()
 {
     for (int y = 0; y < screenHeight; ++y)
@@ -60,24 +84,6 @@ int32_t CpuCalculator::iter_mandel(int cre, int cim)
     const float re = offsetLeft + (stepHorizontal * cre);
     const float im = offsetTop - (stepVertical * cim);
 
-    float r = 0.0f;
-    float i = 0.0f;
-    int32_t iteration = 0;
-
-    //  while (x*x + y*y < 2*2  AND  iteration < max_iteration) {
-    auto rs = r * r;
-    auto is = i * i;
-    while (rs + is < 4 && iteration < maxIterations)
-    {
-        float xtemp = rs - is + re;
-        i = 2 * r * i + im;
-        r = xtemp;
-        ++iteration;
-
-        //  refresh data for next iterations
-        rs = r * r;
-        is = i * i;
-    }
-
-    return iteration;
+    auto result = calculate(re, im);
+    return result;
 }
