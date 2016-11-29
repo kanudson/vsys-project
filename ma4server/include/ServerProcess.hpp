@@ -39,6 +39,8 @@ public:
     int32_t run() override;
     int32_t shutdown() override;
 
+    static void processRequest(boost::asio::ip::tcp::socket socket);
+
 private:
     boost::asio::io_service ioservice_;
 

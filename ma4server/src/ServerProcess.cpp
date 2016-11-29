@@ -26,6 +26,7 @@
 
 #include <boost/thread.hpp>
 #include <boost/asio.hpp>
+#include <boost/array.hpp>
 #include <fstream>
 #include <algorithm>
 
@@ -43,7 +44,6 @@ int32_t ServerProcess::init()
 int32_t ServerProcess::run()
 {
     std::cout << "server is up, waiting for connections..." << std::endl;
-    const std::string msg = "hello world from server";
 
     tcp::acceptor acceptor(ioservice_, tcp::endpoint(tcp::v4(), HOSTPORT));
     for (;;)
@@ -52,9 +52,7 @@ int32_t ServerProcess::run()
         tcp::socket socket(ioservice_);
         acceptor.accept(socket);
 
-        //  process client request
-        boost::system::error_code ignoredError;
-        boost::asio::write(socket, boost::asio::buffer(msg), ignoredError);
+        processRequest(std::move(socket));
     }
 
     return 42;
@@ -63,4 +61,46 @@ int32_t ServerProcess::run()
 int32_t ServerProcess::shutdown()
 {
     return 0;
+}
+
+void ServerProcess::processRequest(boost::asio::ip::tcp::socket socket)
+{
+    boost::array<char, 8> buf;
+    boost::system::error_code ignoredError;
+
+    //std::cout << "Got a connection, waiting for request... ";
+    int bytesRead = 0;
+    do 
+    {
+        bytesRead += socket.read_some(boost::asio::buffer(buf), ignoredError);
+    } while (bytesRead < 8);
+    //std::cout << " it's here!!! :D\n";
+
+    float re = *(reinterpret_cast<float*>(&(*buf.data())));
+    float im = *(reinterpret_cast<float*>(&(*buf.data()) + 4));
+    //std::cout << "got re\t" << re << "\ngot im\t" << im << "\n";
+
+    int32_t iteration = 0;
+    {   //  calculate mandelbrot iteration shit
+        float r = 0.0f;
+        float i = 0.0f;
+
+        //  while (x*x + y*y < 2*2  AND  iteration < max_iteration) {
+        auto rs = r * r;
+        auto is = i * i;
+        while (rs + is < 4 && iteration < 255)
+        {
+            float xtemp = rs - is + re;
+            i = 2 * r * i + im;
+            r = xtemp;
+            ++iteration;
+
+            //  refresh data for next iterations
+            rs = r * r;
+            is = i * i;
+        }
+    }
+
+    std::string msg = std::to_string(iteration);
+    boost::asio::write(socket, boost::asio::buffer(msg), ignoredError);
 }

@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include <ClientProcess.hpp>
+#include <ma4lib/RemoteCalculator.hpp>
 #include <ma4lib/TimeMeasure.hpp>
 
 #include <boost/thread.hpp>
@@ -44,42 +45,6 @@ int32_t ClientProcess::init()
 
 int32_t ClientProcess::run()
 {
-    std::cout << "running client..." << std::endl;
-
-    boost::asio::io_service ioservice;
-    tcp::resolver resolver(ioservice);
-    tcp::resolver::query query(tcp::v4(), tcpHostname, tcpPort);
-    const tcp::resolver::iterator iter = resolver.resolve(query), end;
-
-    std::cout << "looking for hosts... found:\n";
-    for (auto loc = iter; loc != end; loc++)
-    {
-        boost::asio::ip::tcp::endpoint endpoint = *loc;
-        std::cout << "\t" << endpoint << std::endl;
-    }
-
-    std::cout << "connecting...\n";
-    tcp::socket socket(ioservice);
-    boost::asio::connect(socket, iter);
-
-    std::stringstream ss;
-    for (;;)
-    {
-        boost::array<char, 128> buf;
-        boost::system::error_code error;
-
-        size_t len = socket.read_some(boost::asio::buffer(buf), error);
-        if (error == boost::asio::error::eof)
-            break; // Connection closed cleanly by peer.
-        else if (error)
-            throw boost::system::system_error(error); // Some other error.
-
-        ss.write(buf.data(), len);
-    }
-    std::cout << ss.str() << std::endl;
-
-    return 0;
-
     for (const std::string& str : args_)
         std::cout << str.c_str() << std::endl;
 
@@ -100,24 +65,24 @@ DataVector ClientProcess::createImage()
     const int iterations = 0xFF;
 
     std::cout << "createImage()... ";
-    //CpuCalculator calc;
-    //calc.setScreenWidth(screenWidth);
-    //calc.setScreenHeight(screenHeight);
-    //calc.setMaxIterations(iterations);
-    //calc.setOffsetTop(1.0f);
-    //calc.setOffsetBottom(-1.0f);
-    //calc.setOffsetLeft(-2.5f);
-    //calc.setOffsetRight(1.0f);
+    RemoteCalculator calc(tcpHostname, tcpPort);
+    calc.setScreenWidth(screenWidth);
+    calc.setScreenHeight(screenHeight);
+    calc.setMaxIterations(iterations);
+    calc.setOffsetTop(1.0f);
+    calc.setOffsetBottom(-1.0f);
+    calc.setOffsetLeft(-2.5f);
+    calc.setOffsetRight(1.0f);
 
-    //typedef void (CpuCalculator::*FuncPtr)();
-    //constexpr FuncPtr fkt = &CpuCalculator::calculate;
-    //auto duration = measureTime<boost::chrono::milliseconds>(calc, fkt);
-    //std::cout << "(took " << duration.count() << "ms)\n";
+    typedef void (RemoteCalculator::*FuncPtr)();
+    constexpr FuncPtr fkt = &RemoteCalculator::calculate;
 
-    //return calc.getData();
-    DataVector res;
-    return res;
+    auto duration = measureTime<boost::chrono::milliseconds>(calc, fkt);
+    std::cout << "(took " << duration.count() << "ms)\n";
 
+    return calc.getData();
+    //DataVector res;
+    //return res;
 }
 
 void ClientProcess::processImagePgmAscii(const DataVector& data, std::string filename)

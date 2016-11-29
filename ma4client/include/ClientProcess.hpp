@@ -40,8 +40,8 @@ public:
 
 private:
     static constexpr int factor = 1;
-    const int screenWidth = 3840 * factor;
-    const int screenHeight = 2160 * factor;
+    const int screenWidth = 320 * factor;
+    const int screenHeight = 240 * factor;
 
     //  1080p is ~2.25x of 720p
     //

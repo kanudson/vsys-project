@@ -20,41 +20,60 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <CpuCalculator.hpp>
+#include <ma4lib/RemoteCalculator.hpp>
 
-void CpuCalculator::calculate()
+#include <boost/array.hpp>
+#include <boost/asio.hpp>
+using boost::asio::ip::tcp;
+
+RemoteCalculator::RemoteCalculator(std::string host, std::string port)
+    :host_(host)
+    ,port_(port)
+{}
+
+void RemoteCalculator::calculate()
 {
     data.resize(screenWidth * screenHeight);
-
-    run();
-    //run_openmp();
+    calculateAllData();
 }
 
-int32_t CpuCalculator::calculate(float re, float im)
+int32_t RemoteCalculator::calculate(float re, float im)
 {
-    float r = 0.0f;
-    float i = 0.0f;
-    int32_t iteration = 0;
+    boost::asio::io_service ioservice;
+    tcp::resolver resolver(ioservice);
+    tcp::resolver::query query(tcp::v4(), host_, port_);
+    const tcp::resolver::iterator iter = resolver.resolve(query), end;
 
-    //  while (x*x + y*y < 2*2  AND  iteration < max_iteration) {
-    auto rs = r * r;
-    auto is = i * i;
-    while (rs + is < 4 && iteration < maxIterations)
+    tcp::socket socket(ioservice);
+    boost::asio::connect(socket, iter);
+    boost::system::error_code ignoredError;
+
+    //  send request
+    float valbuffer[2] = { re, im };
+    boost::asio::write(socket, boost::asio::buffer(valbuffer, sizeof(valbuffer)), ignoredError);
+
+    std::stringstream ss;
+    for (;;)
     {
-        float xtemp = rs - is + re;
-        i = 2 * r * i + im;
-        r = xtemp;
-        ++iteration;
+        boost::array<char, 128> buf;
+        boost::system::error_code error;
 
-        //  refresh data for next iterations
-        rs = r * r;
-        is = i * i;
+        size_t len = socket.read_some(boost::asio::buffer(buf), error);
+        if (error == boost::asio::error::eof)
+            break; // Connection closed cleanly by peer.
+        else if (error)
+            throw boost::system::system_error(error); // Some other error.
+
+        ss.write(buf.data(), len);
     }
+    std::cout << re << " x " << im << "\tcalculate() result: " << ss.str() << std::endl;
 
-    return iteration;
+    int32_t result;
+    ss >> result;
+    return result;
 }
 
-void CpuCalculator::run()
+void RemoteCalculator::calculateAllData()
 {
     for (int y = 0; y < screenHeight; ++y)
         for (int x = 0; x < screenWidth; ++x)
@@ -64,18 +83,7 @@ void CpuCalculator::run()
         }
 }
 
-void CpuCalculator::run_openmp()
-{
-#pragma omp parallel for schedule(static, 40)
-    for (int y = 0; y < screenHeight; ++y)
-        for (int x = 0; x < screenWidth; ++x)
-        {
-            auto iteration = iter_mandel(x, y);
-            data[(screenWidth * y) + x] = iteration;
-        }
-}
-
-int32_t CpuCalculator::iter_mandel(int cre, int cim)
+int32_t RemoteCalculator::iter_mandel(int cre, int cim)
 {
     const float stepHorizontal = (offsetRight - offsetLeft) / static_cast<float>(screenWidth);
     const float stepVertical = (offsetTop - offsetBottom) / static_cast<float>(screenHeight);

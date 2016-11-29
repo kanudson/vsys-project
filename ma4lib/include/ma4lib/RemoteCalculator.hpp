@@ -20,23 +20,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef ma4server_CpuCalculator_h__
-#define ma4server_CpuCalculator_h__
+#ifndef ma4lib_RemoteCalculator_h__
+#define ma4lib_RemoteCalculator_h__
 
 #include <ma4lib/vsys.hpp>
 #include <ma4lib/ICalculator.hpp>
 
-class CpuCalculator :
+class RemoteCalculator :
     public ICalculator
 {
 public:
+    RemoteCalculator(std::string host, std::string port);
+
     void calculate() override;
     int32_t calculate(float re, float im) override;
 
 private:
     int32_t iter_mandel(int cre, int cim);
-    void run();
-    void run_openmp();
+    void calculateAllData();
+
+    std::string host_, port_;
 };
 
-#endif // ma4server_CpuCalculator_h__
+#endif // ma4lib_RemoteCalculator_h__

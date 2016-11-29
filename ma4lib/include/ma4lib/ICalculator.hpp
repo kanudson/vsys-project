@@ -29,7 +29,7 @@ class ICalculator
 {
 public:
     virtual void calculate() = 0;
-    virtual float calculate(float re, float im) = 0;
+    virtual int32_t calculate(float re, float im) = 0;
 
     virtual ~ICalculator()
     {}
