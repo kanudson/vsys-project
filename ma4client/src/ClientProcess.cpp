@@ -62,6 +62,7 @@ int32_t ClientProcess::run()
     tcp::socket socket(ioservice);
     boost::asio::connect(socket, iter);
 
+    std::stringstream ss;
     for (;;)
     {
         boost::array<char, 128> buf;
@@ -73,8 +74,9 @@ int32_t ClientProcess::run()
         else if (error)
             throw boost::system::system_error(error); // Some other error.
 
-        std::cout.write(buf.data(), len);
+        ss.write(buf.data(), len);
     }
+    std::cout << ss.str() << std::endl;
 
     return 0;
 
