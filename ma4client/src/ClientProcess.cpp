@@ -122,13 +122,13 @@ void ClientProcess::processImagePgmBinary(const DataVector& data, std::string fi
         file << screenHeight << "\n";
         file << static_cast<int>(255) << "\n";
 
-        std::vector<char> buffer(screenHeight * screenWidth * 2);
+        std::vector<char> buffer(screenHeight * screenWidth);
         auto iter = buffer.begin();
 
         for (auto& value : data)
         {
             *iter++ = std::max(std::min(value, 0xFF), 0);
-            *iter++ = '\n';
+            //*iter++ = '\n';
         }
 
         file.write(buffer.data(), buffer.size());
