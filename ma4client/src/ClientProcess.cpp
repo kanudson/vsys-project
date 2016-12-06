@@ -119,7 +119,7 @@ void ClientProcess::processImagePgmBinary(const DataVector& data, std::string fi
         file << screenHeight << "\n";
         file << static_cast<int>(255) << " ";
 
-        std::vector<char> buffer(screenHeight * screenWidth * 2);
+        std::vector<char> buffer(screenHeight * screenWidth);
         auto iter = buffer.begin();
 
         //  TODO funktioniert noch nicht
@@ -127,11 +127,8 @@ void ClientProcess::processImagePgmBinary(const DataVector& data, std::string fi
 
         for (auto& value : data)
         {
-            unsigned char val = std::max(std::min(value, 255), 0);
-            unsigned char* ref = reinterpret_cast<unsigned char*>(&(*iter));
-            *ref = val;
-
-            ++iter;
+            *iter++ = std::max(std::min(value, 0xFF), 0);
+            //*iter++ = '\n';
         }
 
         file.write(buffer.data(), buffer.size());
