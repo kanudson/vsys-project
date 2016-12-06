@@ -25,6 +25,9 @@
 
 #include <ma4lib/vsys.hpp>
 #include <ma4lib/ICalculator.hpp>
+#include <memory>
+
+struct RemoteCalculatorImpl;
 
 class RemoteCalculator :
     public ICalculator
@@ -40,6 +43,7 @@ private:
     void calculateAllData();
 
     std::string host_, port_;
+    std::shared_ptr<RemoteCalculatorImpl> impl_;
 };
 
 #endif // ma4lib_RemoteCalculator_h__

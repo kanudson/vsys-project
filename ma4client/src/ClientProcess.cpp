@@ -50,7 +50,7 @@ int32_t ClientProcess::run()
 
     auto imgdata = createImage();
     processImagePgmAscii(imgdata, pgmFileAscii);
-    processImagePgmBinary(imgdata, pgmFileBinary);
+    //processImagePgmBinary(imgdata, pgmFileBinary);
 
     return 42;
 }
@@ -64,7 +64,6 @@ DataVector ClientProcess::createImage()
 {
     const int iterations = 0xFF;
 
-    std::cout << "createImage()... ";
     RemoteCalculator calc(tcpHostname, tcpPort);
     calc.setScreenWidth(screenWidth);
     calc.setScreenHeight(screenHeight);
@@ -78,7 +77,7 @@ DataVector ClientProcess::createImage()
     constexpr FuncPtr fkt = &RemoteCalculator::calculate;
 
     auto duration = measureTime<boost::chrono::milliseconds>(calc, fkt);
-    std::cout << "(took " << duration.count() << "ms)\n";
+    std::cout << "createImage()... (took " << duration.count() << "ms)\n";
 
     return calc.getData();
     //DataVector res;
@@ -87,8 +86,7 @@ DataVector ClientProcess::createImage()
 
 void ClientProcess::processImagePgmAscii(const DataVector& data, std::string filename)
 {
-    std::cout << "processImagePgm...";
-
+    //  logic inside lambda for measureTime<> template
     auto lambda = [&]()
     {
         std::fstream file(filename, std::ios::out);
@@ -106,13 +104,12 @@ void ClientProcess::processImagePgmAscii(const DataVector& data, std::string fil
     };
 
     auto duration = measureTime<boost::chrono::milliseconds>(lambda);
-    std::cout << "(took " << duration.count() << "ms)\n";
+    std::cout << "processImagePgm... (took " << duration.count() << "ms)\n";
 }
 
 void ClientProcess::processImagePgmBinary(const DataVector& data, std::string filename)
 {
-    std::cout << "processImagePgm...";
-
+    //  logic inside lambda for measureTime<> template
     auto lambda = [&]()
     {
         std::fstream file(filename, std::ios::out);
@@ -120,20 +117,26 @@ void ClientProcess::processImagePgmBinary(const DataVector& data, std::string fi
         file << "P5\n";
         file << screenWidth << "\n";
         file << screenHeight << "\n";
-        file << static_cast<int>(255) << "\n";
+        file << static_cast<int>(255) << " ";
 
         std::vector<char> buffer(screenHeight * screenWidth * 2);
         auto iter = buffer.begin();
 
+        //  TODO funktioniert noch nicht
+        //  bild passt ganz und gar nicht
+
         for (auto& value : data)
         {
-            *iter++ = std::max(std::min(value, 0xFF), 0);
-            *iter++ = '\n';
+            unsigned char val = std::max(std::min(value, 255), 0);
+            unsigned char* ref = reinterpret_cast<unsigned char*>(&(*iter));
+            *ref = val;
+
+            ++iter;
         }
 
         file.write(buffer.data(), buffer.size());
     };
 
     auto duration = measureTime<boost::chrono::milliseconds>(lambda);
-    std::cout << "(took " << duration.count() << "ms)\n";
+    std::cout << "processImagePgm... (took " << duration.count() << "ms)\n";
 }

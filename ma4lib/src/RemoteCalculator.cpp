@@ -26,10 +26,21 @@
 #include <boost/asio.hpp>
 using boost::asio::ip::tcp;
 
+struct RemoteCalculatorImpl
+{
+    boost::asio::io_service service;
+    tcp::resolver::iterator endpoint;
+};
+
 RemoteCalculator::RemoteCalculator(std::string host, std::string port)
     :host_(host)
     ,port_(port)
-{}
+    ,impl_(std::make_shared<RemoteCalculatorImpl>())
+{
+    tcp::resolver resolver(impl_->service);
+    tcp::resolver::query query(tcp::v4(), host_, port_);
+    impl_->endpoint = resolver.resolve(query);
+}
 
 void RemoteCalculator::calculate()
 {
@@ -39,13 +50,11 @@ void RemoteCalculator::calculate()
 
 int32_t RemoteCalculator::calculate(float re, float im)
 {
-    boost::asio::io_service ioservice;
-    tcp::resolver resolver(ioservice);
-    tcp::resolver::query query(tcp::v4(), host_, port_);
-    const tcp::resolver::iterator iter = resolver.resolve(query), end;
+    auto& ioservice = impl_->service;
+    auto& endpoint = impl_->endpoint;
 
     tcp::socket socket(ioservice);
-    boost::asio::connect(socket, iter);
+    boost::asio::connect(socket, endpoint);
     boost::system::error_code ignoredError;
 
     //  send request
@@ -66,7 +75,7 @@ int32_t RemoteCalculator::calculate(float re, float im)
 
         ss.write(buf.data(), len);
     }
-    std::cout << re << " x " << im << "\tcalculate() result: " << ss.str() << std::endl;
+    //std::cout << re << " x " << im << "\tcalculate() result: " << ss.str() << std::endl;
 
     int32_t result;
     ss >> result;
@@ -76,11 +85,14 @@ int32_t RemoteCalculator::calculate(float re, float im)
 void RemoteCalculator::calculateAllData()
 {
     for (int y = 0; y < screenHeight; ++y)
+    {
+        //std::cout << (y * 100) / screenHeight << "% done...\n";
         for (int x = 0; x < screenWidth; ++x)
         {
             auto iteration = iter_mandel(x, y);
             data[(screenWidth * y) + x] = iteration;
         }
+    }
 }
 
 int32_t RemoteCalculator::iter_mandel(int cre, int cim)
