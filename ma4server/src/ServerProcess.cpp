@@ -80,27 +80,9 @@ void ServerProcess::processRequest(boost::asio::ip::tcp::socket socket)
     float im = *(reinterpret_cast<float*>(&(*buf.data()) + 4));
     //std::cout << "got re\t" << re << "\ngot im\t" << im << "\n";
 
-    int32_t iteration = 0;
-    {   //  calculate mandelbrot iteration shit
-        float r = 0.0f;
-        float i = 0.0f;
+    CpuCalculator calc;
+    auto result = calc.calculate(re, im);
 
-        //  while (x*x + y*y < 2*2  AND  iteration < max_iteration) {
-        auto rs = r * r;
-        auto is = i * i;
-        while (rs + is < 4 && iteration < 255)
-        {
-            float xtemp = rs - is + re;
-            i = 2 * r * i + im;
-            r = xtemp;
-            ++iteration;
-
-            //  refresh data for next iterations
-            rs = r * r;
-            is = i * i;
-        }
-    }
-
-    std::string msg = std::to_string(iteration);
+    std::string msg = std::to_string(result);
     boost::asio::write(socket, boost::asio::buffer(msg), ignoredError);
 }
