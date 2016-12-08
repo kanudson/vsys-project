@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <CpuCalculator.hpp>
+#include <ma4lib/CpuCalculator.hpp>
 
 void CpuCalculator::calculate()
 {

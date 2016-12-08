@@ -22,7 +22,7 @@
 
 #include <ServerProcess.hpp>
 #include <ma4lib/TimeMeasure.hpp>
-#include <CpuCalculator.hpp>
+#include <ma4lib/CpuCalculator.hpp>
 
 #include <boost/thread.hpp>
 #include <boost/asio.hpp>
