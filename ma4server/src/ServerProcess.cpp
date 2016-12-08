@@ -78,11 +78,12 @@ void ServerProcess::processRequest(boost::asio::ip::tcp::socket socket)
 
     float re = *(reinterpret_cast<float*>(&(*buf.data())));
     float im = *(reinterpret_cast<float*>(&(*buf.data()) + 4));
-    //std::cout << "got re\t" << re << "\ngot im\t" << im << "\n";
 
     CpuCalculator calc;
+    calc.setMaxIterations(0x0000FFFF);
     auto result = calc.calculate(re, im);
 
     std::string msg = std::to_string(result);
     boost::asio::write(socket, boost::asio::buffer(msg), ignoredError);
+    //std::cout << "got re\t" << re << "\tgot im\t" << im << "\tres is\t" << result << "\n";
 }
