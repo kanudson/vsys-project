@@ -50,7 +50,7 @@ int32_t ClientProcess::run()
 
     auto imgdata = createImage();
     processImagePgmAscii(imgdata, pgmFileAscii);
-    //processImagePgmBinary(imgdata, pgmFileBinary);
+    processImagePgmBinary(imgdata, pgmFileBinary);
 
     return 42;
 }
@@ -112,7 +112,7 @@ void ClientProcess::processImagePgmBinary(const DataVector& data, std::string fi
     //  logic inside lambda for measureTime<> template
     auto lambda = [&]()
     {
-        std::fstream file(filename, std::ios::out);
+        std::fstream file(filename, std::ios::out /*| std::ios::binary*/);
 
         file << "P5\n";
         file << screenWidth << "\n";
