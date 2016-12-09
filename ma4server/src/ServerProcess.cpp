@@ -65,25 +65,24 @@ int32_t ServerProcess::shutdown()
 
 void ServerProcess::processRequest(boost::asio::ip::tcp::socket socket)
 {
-    boost::array<char, 8> buf;
+    boost::array<char, 12> buf;
     boost::system::error_code ignoredError;
 
-    //std::cout << "Got a connection, waiting for request... ";
     int bytesRead = 0;
     do 
     {
         bytesRead += socket.read_some(boost::asio::buffer(buf), ignoredError);
-    } while (bytesRead < 8);
-    //std::cout << " it's here!!! :D\n";
+    } while (bytesRead < 12);
 
     float re = *(reinterpret_cast<float*>(&(*buf.data())));
     float im = *(reinterpret_cast<float*>(&(*buf.data()) + 4));
+    int32_t iterations = *(reinterpret_cast<int32_t*>(&(*buf.data()) + 8));
 
     CpuCalculator calc;
-    calc.setMaxIterations(0x0000FFFF);
+    calc.setMaxIterations(iterations);
     auto result = calc.calculate(re, im);
 
     std::string msg = std::to_string(result);
     boost::asio::write(socket, boost::asio::buffer(msg), ignoredError);
-    //std::cout << "got re\t" << re << "\tgot im\t" << im << "\tres is\t" << result << "\n";
+    //std::cout << "got re\t" << re << "\tgot im\t" << im << "\tres is\t" << result << "\tused " << iterations << "\n";
 }

@@ -58,8 +58,11 @@ int32_t RemoteCalculator::calculate(float re, float im)
     boost::system::error_code ignoredError;
 
     //  send request
-    float valbuffer[2] = { re, im };
-    boost::asio::write(socket, boost::asio::buffer(valbuffer, sizeof(valbuffer)), ignoredError);
+    boost::array<char, 12> buf;
+    *(reinterpret_cast<float*>(&(*buf.data()))) = re;
+    *(reinterpret_cast<float*>(&(*buf.data()) + 4)) = im;
+    *(reinterpret_cast<int32_t*>(&(*buf.data()) + 8)) = this->maxIterations;
+    boost::asio::write(socket, boost::asio::buffer(buf, buf.size()), ignoredError);
 
     std::stringstream ss;
     for (;;)
@@ -75,7 +78,7 @@ int32_t RemoteCalculator::calculate(float re, float im)
 
         ss.write(buf.data(), len);
     }
-    //std::cout << re << " x " << im << "\tcalculate() result: " << ss.str() << std::endl;
+    //std::cout << re << " x " << im << "\tcalculate() result: " << ss.str() << "\t" << maxIterations << "\n";
 
     int32_t result;
     ss >> result;
@@ -86,7 +89,7 @@ void RemoteCalculator::calculateAllData()
 {
     for (int y = 0; y < screenHeight; ++y)
     {
-        //std::cout << (y * 100) / screenHeight << "% done...\n";
+        std::cout << (y * 100) / screenHeight << "% done...\n";
         for (int x = 0; x < screenWidth; ++x)
         {
             auto iteration = iter_mandel(x, y);
