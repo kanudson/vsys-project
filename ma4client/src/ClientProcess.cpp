@@ -76,8 +76,9 @@ DataVector ClientProcess::createImage()
     typedef void (RemoteCalculator::*FuncPtr)();
     constexpr FuncPtr fkt = &RemoteCalculator::calculate;
 
-    auto duration = measureTime<boost::chrono::milliseconds>(calc, fkt);
-    std::cout << "createImage()... (took " << duration.count() << "ms)\n";
+    //auto duration = measureTime<boost::chrono::milliseconds>(calc, fkt);
+    //std::cout << "createImage()... (took " << duration.count() << "ms)\n";
+    calc.calculate();
 
     return calc.getData();
     //DataVector res;
