@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include <ClientProcess.hpp>
+#include <ma4lib/CpuCalculator.hpp>
 #include <ma4lib/RemoteCalculator.hpp>
 #include <ma4lib/TimeMeasure.hpp>
 
@@ -52,6 +53,7 @@ int32_t ClientProcess::run()
     auto imgdata = createImage();
     processImagePgmAscii(imgdata, pgmFileAscii);
     processImagePgmBinary(imgdata, pgmFileBinary);
+    processImagePpmAscii(imgdata, ppmFileColor);
 
     return 42;
 }
@@ -63,10 +65,10 @@ int32_t ClientProcess::shutdown()
 
 DataVector ClientProcess::createImage()
 {
-		std::cout << "creatImagte()";
+    std::cout << "creatImagte()";
     const int iterations = 0xFF;
 
-    RemoteCalculator calc(tcpHostname, tcpPort);
+    CpuCalculator calc;
     calc.setScreenWidth(screenWidth);
     calc.setScreenHeight(screenHeight);
     calc.setMaxIterations(iterations);
@@ -75,8 +77,8 @@ DataVector ClientProcess::createImage()
     calc.setOffsetLeft(-2.5f);
     calc.setOffsetRight(1.0f);
 
-    typedef void (RemoteCalculator::*FuncPtr)();
-    constexpr FuncPtr fkt = &RemoteCalculator::calculate;
+    typedef void (CpuCalculator::*FuncPtr)();
+    constexpr FuncPtr fkt = &CpuCalculator::calculate;
 
     //auto duration = measureTime<boost::chrono::milliseconds>(calc, fkt);
     //std::cout << "createImage()... (took " << duration.count() << "ms)\n";
@@ -143,44 +145,71 @@ void ClientProcess::processImagePgmBinary(const DataVector& data, std::string fi
 
 void ClientProcess::processImagePpmAscii(const DataVector& data, std::string filename)
 {
-		std::cout << "processImagePpmAscii()";
+    std::cout << "processImagePpmAscii()";
 
-		//  logic inside lambda for measureTime<> template
+    //  logic inside lambda for measureTime<> template
     auto lambda = [&]()
     {
-        std::fstream file(filename, std::ios::out);
-        std::stringstream ss;
+        std::fstream file(filename, std::ios::out | std::ios::binary);
 
         //  fill buffer with data
-        ss << "P3\n";
-        ss << screenWidth << "\n";
-        ss << screenHeight << "\n";
-        ss << static_cast<int>(255) << "\n";
+        file << "P6\n";
+        file << screenWidth << " ";
+        file << screenHeight << "\n";
+        file << static_cast<int>(255) << "\n";
 
-        const char *setrgb;
+        std::vector<char> buffer(screenHeight * screenWidth * 3);
+        auto iter = buffer.begin();
 
-        for (auto& value : data){
-        	if(value == 0){
-        		setrgb = "  0   0   0"; // Black
-        		ss << setrgb << "\n";
-        	}
-        	else if(value > 0 && value <= 86){
-        		setrgb = "255   0   0"; // Red
-        		ss << setrgb << "\n";
-        	}
-        	else if(value > 86 && value <= 171){
-        		setrgb = "  0 255   0"; // Green
-        	  ss << setrgb << "\n";
-        	}
-        	else if(value > 171 && value <= 254){
-        		setrgb = "  0   0 255"; // Blue
-        	  ss << setrgb << "\n";
-        	}
-        	else if(value > 254)
-        		setrgb = "255 255 255"; // White
-        		ss << setrgb << "\n";
+        for (auto& value : data)
+        {
+            //  TODO maxIterations konfigurierbar machen
+            if (value >= 255)
+            {
+                *iter++ = 0xff;
+                *iter++ = 0xff;
+                *iter++ = 0xff;
+            }
+            else
+            {
+                *iter++ = value % 255;
+                *iter++ = value % 32;
+                *iter++ = value % 4;
+            }
+            continue;
+
+            //if (value == 0)
+            //{   //  black
+            //    *iter++ = 0x00;
+            //    *iter++ = 0x00;
+            //    *iter++ = 0x00;
+            //}
+            //else if(value > 0 && value <= 86)
+            //{   // red
+            //    *iter++ = 0xFF;
+            //    *iter++ = 0x00;
+            //    *iter++ = 0x00;
+            //}
+            //else if(value > 86 && value <= 171)
+            //{   //  green
+            //    *iter++ = 0x00;
+            //    *iter++ = 0xFF;
+            //    *iter++ = 0x00;
+            //}
+            //else if(value > 171 && value <= 254)
+            //{   //  blue
+            //    *iter++ = 0x00;
+            //    *iter++ = 0x00;
+            //    *iter++ = 0xFF;
+            //}
+            //else
+            //{   //  white
+            //    *iter++ = 0xFF;
+            //    *iter++ = 0xFF;
+            //    *iter++ = 0xFF;
+            //}
         }
-        file << ss.str();
+        file.write(buffer.data(), buffer.size());
     };
 
     auto duration = measureTime<boost::chrono::milliseconds>(lambda);
