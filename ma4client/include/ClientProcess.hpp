@@ -61,6 +61,7 @@ private:
 
     void processImagePgmAscii(const DataVector& data, std::string filename);
     void processImagePgmBinary(const DataVector& data, std::string filename);
+    void processImagePpmAscii(const DataVector& data, std::string filename);
 };
 
 #endif // mavsys_ServerProcess_h__

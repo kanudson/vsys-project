@@ -86,7 +86,7 @@ void RemoteCalculator::calculateAllData()
 {
     for (int y = 0; y < screenHeight; ++y)
     {
-        //std::cout << (y * 100) / screenHeight << "% done...\n";
+        std::cout << (y * 100) / screenHeight << "% done...\n";
         for (int x = 0; x < screenWidth; ++x)
         {
             auto iteration = iter_mandel(x, y);

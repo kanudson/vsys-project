@@ -34,6 +34,7 @@ using boost::asio::ip::tcp;
 
 const char* pgmFileAscii = "imgascii.pgm";
 const char* pgmFileBinary = "imgbin.pgm";
+const char* ppmFileColor = "imgcolor.ppm";
 
 const char* tcpHostname = "localhost";
 const char* tcpPort = "40123";
@@ -50,7 +51,8 @@ int32_t ClientProcess::run()
 
     auto imgdata = createImage();
     processImagePgmAscii(imgdata, pgmFileAscii);
-    //processImagePgmBinary(imgdata, pgmFileBinary);
+    processImagePgmBinary(imgdata, pgmFileBinary);
+    //processImagePpmAscii(imgdata, ppmFileColor);
 
     return 42;
 }
@@ -62,6 +64,7 @@ int32_t ClientProcess::shutdown()
 
 DataVector ClientProcess::createImage()
 {
+		std::cout << "creatImagte()";
     const int iterations = 0xFF;
 
     RemoteCalculator calc(tcpHostname, tcpPort);
@@ -132,6 +135,52 @@ void ClientProcess::processImagePgmBinary(const DataVector& data, std::string fi
         }
 
         file.write(buffer.data(), buffer.size());
+    };
+
+    auto duration = measureTime<boost::chrono::milliseconds>(lambda);
+    std::cout << "processImagePgm... (took " << duration.count() << "ms)\n";
+}
+
+void ClientProcess::processImagePpmAscii(const DataVector& data, std::string filename)
+{
+		std::cout << "processImagePpmAscii()";
+
+		//  logic inside lambda for measureTime<> template
+    auto lambda = [&]()
+    {
+        std::fstream file(filename, std::ios::out);
+        std::stringstream ss;
+
+        //  fill buffer with data
+        ss << "P3\n";
+        ss << screenWidth << "\n";
+        ss << screenHeight << "\n";
+        ss << static_cast<int>(255) << "\n";
+
+        const char *setrgb;
+
+        for (auto& value : data){
+        	if(value == 0){
+        		setrgb = "  0   0   0"; // Black
+        		ss << setrgb << "\n";
+        	}
+        	else if(value > 0 && value <= 86){
+        		setrgb = "255   0   0"; // Red
+        		ss << setrgb << "\n";
+        	}
+        	else if(value > 86 && value <= 171){
+        		setrgb = "  0 255   0"; // Green
+        	  ss << setrgb << "\n";
+        	}
+        	else if(value > 171 && value <= 254){
+        		setrgb = "  0   0 255"; // Blue
+        	  ss << setrgb << "\n";
+        	}
+        	else if(value > 254)
+        		setrgb = "255 255 255"; // White
+        		ss << setrgb << "\n";
+        }
+        file << ss.str();
     };
 
     auto duration = measureTime<boost::chrono::milliseconds>(lambda);
