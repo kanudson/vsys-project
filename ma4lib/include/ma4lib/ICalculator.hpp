@@ -79,7 +79,7 @@ protected:
 
     int32_t screenWidth, screenHeight;
     float offsetLeft, offsetRight, offsetTop, offsetBottom;
-    int32_t maxIterations;
+    int32_t maxIterations = 256;
 };
 
 #endif // ma4lib_ICalculator_h__

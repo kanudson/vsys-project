@@ -52,7 +52,6 @@ int32_t ClientProcess::run()
     auto imgdata = createImage();
     processImagePgmAscii(imgdata, pgmFileAscii);
     processImagePgmBinary(imgdata, pgmFileBinary);
-    //processImagePpmAscii(imgdata, ppmFileColor);
 
     return 42;
 }
@@ -79,8 +78,9 @@ DataVector ClientProcess::createImage()
     typedef void (RemoteCalculator::*FuncPtr)();
     constexpr FuncPtr fkt = &RemoteCalculator::calculate;
 
-    auto duration = measureTime<boost::chrono::milliseconds>(calc, fkt);
-    std::cout << "createImage()... (took " << duration.count() << "ms)\n";
+    //auto duration = measureTime<boost::chrono::milliseconds>(calc, fkt);
+    //std::cout << "createImage()... (took " << duration.count() << "ms)\n";
+    calc.calculate();
 
     return calc.getData();
     //DataVector res;
@@ -115,7 +115,7 @@ void ClientProcess::processImagePgmBinary(const DataVector& data, std::string fi
     //  logic inside lambda for measureTime<> template
     auto lambda = [&]()
     {
-        std::fstream file(filename, std::ios::out);
+        std::fstream file(filename, std::ios::out | std::ios::binary);
 
         file << "P5\n";
         file << screenWidth << "\n";

@@ -22,7 +22,7 @@
 
 #include <ServerProcess.hpp>
 #include <ma4lib/TimeMeasure.hpp>
-#include <CpuCalculator.hpp>
+#include <ma4lib/CpuCalculator.hpp>
 
 #include <boost/thread.hpp>
 #include <boost/asio.hpp>
@@ -65,24 +65,24 @@ int32_t ServerProcess::shutdown()
 
 void ServerProcess::processRequest(boost::asio::ip::tcp::socket socket)
 {
-    boost::array<char, 8> buf;
+    boost::array<char, 12> buf;
     boost::system::error_code ignoredError;
 
-    //std::cout << "Got a connection, waiting for request... ";
     int bytesRead = 0;
     do 
     {
         bytesRead += socket.read_some(boost::asio::buffer(buf), ignoredError);
-    } while (bytesRead < 8);
-    //std::cout << " it's here!!! :D\n";
+    } while (bytesRead < 12);
 
     float re = *(reinterpret_cast<float*>(&(*buf.data())));
     float im = *(reinterpret_cast<float*>(&(*buf.data()) + 4));
-    //std::cout << "got re\t" << re << "\ngot im\t" << im << "\n";
+    int32_t iterations = *(reinterpret_cast<int32_t*>(&(*buf.data()) + 8));
 
     CpuCalculator calc;
+    calc.setMaxIterations(iterations);
     auto result = calc.calculate(re, im);
 
     std::string msg = std::to_string(result);
     boost::asio::write(socket, boost::asio::buffer(msg), ignoredError);
+    //std::cout << "got re\t" << re << "\tgot im\t" << im << "\tres is\t" << result << "\tused " << iterations << "\n";
 }
