@@ -21,4 +21,36 @@
 // SOFTWARE.
 
 #include <TcpConnection.hpp>
+#include <ma4lib/CpuCalculator.hpp>
 
+void TcpConnection::start()
+{
+    boost::array<char, 12> buf;
+    boost::system::error_code ignoredError;
+
+    int bytesRead = 0;
+    do
+    {
+        //  TODO buf + bytesRead beim erneuten read_some
+        bytesRead += socket_.read_some(boost::asio::buffer(buf), ignoredError);
+    } while (bytesRead < 12);
+
+    float re = *(reinterpret_cast<float*>(&(*buf.data())));
+    float im = *(reinterpret_cast<float*>(&(*buf.data()) + 4));
+    int32_t iterations = *(reinterpret_cast<int32_t*>(&(*buf.data()) + 8));
+
+    CpuCalculator calc;
+    calc.setMaxIterations(iterations);
+    auto result = calc.calculate(re, im);
+
+    std::string msg = std::to_string(result);
+    boost::asio::write(socket_, boost::asio::buffer(msg), ignoredError);
+    std::cout << "got re\t" << re << "\tgot im\t" << im << "\tres is\t" << result << "\tused " << iterations << "\n";
+}
+
+void TcpConnection::handleRecieve()
+{}
+
+void TcpConnection::handleWrite()
+{
+}

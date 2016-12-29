@@ -23,6 +23,8 @@
 #include <ServerProcess.hpp>
 #include <ma4lib/TimeMeasure.hpp>
 #include <ma4lib/CpuCalculator.hpp>
+#include <UdpServer.hpp>
+#include <TcpServer.hpp>
 
 #include <boost/thread.hpp>
 #include <boost/array.hpp>
@@ -36,23 +38,27 @@ const char* pgmFileAscii = "imgascii.pgm";
 const char* pgmFileBinary = "imgbin.pgm";
 
 int32_t ServerProcess::init()
-{
+{    
     return 0;
 }
 
 int32_t ServerProcess::run()
 {
+    UdpServer udp(ioservice_, REQUEST_PORT_BEGIN + 1);
+    TcpServer tcp(ioservice_, REQUEST_PORT_BEGIN + 1);
+ 
     std::cout << "server is up, waiting for connections..." << std::endl;
+    ioservice_.run();
 
-    tcp::acceptor acceptor(ioservice_, tcp::endpoint(tcp::v4(), HOSTPORT));
-    for (;;)
-    {
-        //  wait for clients to connect
-        tcp::socket socket(ioservice_);
-        acceptor.accept(socket);
+    //tcp::acceptor acceptor(ioservice_, tcp::endpoint(tcp::v4(), HOSTPORT));
+    //for (;;)
+    //{
+    //    //  wait for clients to connect
+    //    tcp::socket socket(ioservice_);
+    //    acceptor.accept(socket);
 
-        processRequest(std::move(socket));
-    }
+    //    processRequest(std::move(socket));
+    //}
 
     return 42;
 }

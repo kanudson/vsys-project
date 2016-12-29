@@ -38,8 +38,10 @@ public:
     int32_t run() override;
     int32_t shutdown() override;
 
+    void sendBroadcast();
+
 private:
-    static constexpr int factor = 10;
+    static constexpr int factor = 1;
     const int screenWidth = 320 * factor;
     const int screenHeight = 240 * factor;
 

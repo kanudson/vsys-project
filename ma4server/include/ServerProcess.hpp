@@ -43,14 +43,10 @@ public:
 
 private:
     boost::asio::io_service ioservice_;
-    boost::asio::ip::tcp::socket tcpsocket_;
+    //boost::asio::ip::tcp::socket tcpsocket_;
 
     //  incoming connection data
-    boost::asio::ip::tcp::endpoint senderEndpoint_;
-    enum { maxLength = 1024 };
-    char data_[maxLength];
-
-    bool keepRunning_;
+    //boost::asio::ip::tcp::endpoint senderEndpoint_;
 };
 
 #endif // mavsys_ServerProcess_h__
