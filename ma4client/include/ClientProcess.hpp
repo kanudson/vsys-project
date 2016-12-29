@@ -26,11 +26,17 @@
 #include <ma4lib/vsys.hpp>
 #include <ma4lib/IProcess.hpp>
 #include <ma4lib/ICalculator.hpp>
+#include <queue>
 
 struct MandelbrotHost
 {
     std::string ip;
     std::string port;
+};
+
+struct Job
+{
+    int32_t links, rechts, oben, unten;
 };
 
 class ClientProcess : public IProcess
@@ -57,6 +63,7 @@ private:
         offsetBottom = -1.0f;
 
     std::vector<MandelbrotHost> hosts_;
+    std::queue<Job> jobs_;
     static void remoteCalc(ClientProcess* obj, MandelbrotHost host, DataVector* data, int threadId, int threadCount);
 
     //  1080p is ~2.25x of 720p
@@ -72,6 +79,10 @@ private:
     //const int screenHeight = 720;
 
     bool keepRunning_;
+
+    void createJobs();
+    Job getJob();
+    std::mutex jobMutex;
 
     DataVector createImage();
 

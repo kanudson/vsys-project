@@ -24,10 +24,11 @@
 
 using boost::asio::ip::tcp;
 
-TcpServer::TcpServer(boost::asio::io_service& ioservice, const int port)
+TcpServer::TcpServer(boost::asio::io_service& ioservice, const uint16_t port)
     :port_(port)
     ,acceptor_(ioservice, tcp::endpoint(tcp::v4(), port))
 {
+    std::cout << port << std::endl;
     startAccept();
 }
 

@@ -32,7 +32,7 @@
 class TcpServer
 {
 public:
-    TcpServer(boost::asio::io_service& ioservice, const int port);
+    TcpServer(boost::asio::io_service& ioservice, const uint16_t port);
 
 private:
     void startAccept();

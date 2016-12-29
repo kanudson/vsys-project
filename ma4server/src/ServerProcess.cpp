@@ -44,7 +44,7 @@ int32_t ServerProcess::init()
 
 int32_t ServerProcess::run()
 {
-    int32_t tcpport = REQUEST_PORT_BEGIN + std::atoi(args_[1].c_str());
+    uint16_t tcpport = REQUEST_PORT_BEGIN + std::atoi(args_[1].c_str());
     std::cout << "binding on port " << tcpport << "...\n";
 
     UdpServer udp(ioservice_, tcpport);

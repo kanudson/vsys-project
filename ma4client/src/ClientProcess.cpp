@@ -29,7 +29,7 @@
 #include <fstream>
 #include <algorithm>
 #include <thread>
-#include <future>
+#include <mutex>
 
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
@@ -111,34 +111,74 @@ void ClientProcess::sendBroadcast()
 void ClientProcess::remoteCalc(ClientProcess* obj, MandelbrotHost host, DataVector* data, int threadId, int threadCount)
 {
     assert(threadId < threadCount);
-
     RemoteCalculator calc(host.ip, host.port);
 
-    int heightBlock = obj->screenHeight / threadCount;
-    int start = heightBlock * threadId;
-    int end = heightBlock * (threadId + 1);
-
-    if (threadId + 1 == threadCount)
+    for(;;)
     {
-        end = obj->screenHeight;
-    }
+        Job job = obj->getJob();
 
-    for (int y = start; y < end; ++y)
-    {
-        std::cout << "thread #" << threadId << "\t" << ((y - start) * 100) / heightBlock << "% done...\n";
-        for (int x = 0; x < obj->screenWidth; ++x)
+        if (job.links == -1 &&
+            job.rechts == -1 &&
+            job.unten == -1 &&
+            job.oben == -1)
         {
-            const float stepHorizontal = (obj->offsetRight - obj->offsetLeft) / static_cast<float>(obj->screenWidth);
-            const float stepVertical = (obj->offsetTop - obj->offsetBottom) / static_cast<float>(obj->screenHeight);
+            break;
+        }
+        
+        int heightBlock = job.unten - job.oben;
 
-            //  Pixel (0,0) is top left!
-            const float re = obj->offsetLeft + (stepHorizontal * x);
-            const float im = obj->offsetTop - (stepVertical * y);
+        for (int y = job.oben; y < job.unten; ++y)
+        {
+            //std::cout << "thread #" << threadId << "\t" << ((y - job.oben) * 100) / heightBlock << "% done...\n";
+            for (int x = job.links; x < job.rechts; ++x)
+            {
+                const float stepHorizontal = (obj->offsetRight - obj->offsetLeft) / static_cast<float>(obj->screenWidth);
+                const float stepVertical = (obj->offsetTop - obj->offsetBottom) / static_cast<float>(obj->screenHeight);
 
-            auto result = calc.calculate(re, im);
-            (*data)[(obj->screenWidth * y) + x] = result;
+                //  Pixel (0,0) is top left!
+                const float re = obj->offsetLeft + (stepHorizontal * x);
+                const float im = obj->offsetTop - (stepVertical * y);
+
+                auto result = calc.calculate(re, im);
+                (*data)[(obj->screenWidth * y) + x] = result;
+            }
         }
     }
+}
+
+void ClientProcess::createJobs()
+{
+    const int step = 30;
+
+    for (int y = 0; y < screenHeight; y += step)
+    {
+        for (int x = 0; x < screenWidth; x += step)
+        {
+            Job job;
+            job.links = x;
+            job.rechts = std::min(x + step, screenWidth);
+            job.oben = y;
+            job.unten = std::min(y + step, screenHeight);
+            jobs_.push(job);
+        }
+    }
+}
+
+Job ClientProcess::getJob()
+{
+    std::lock_guard<std::mutex> lock(jobMutex);
+
+    if (jobs_.empty())
+    {
+        Job job = { -1, -1, -1, -1 };
+        return job;
+    }
+
+    std::cout << jobs_.size() << " jobs left...\n";
+
+    Job job = jobs_.front();
+    jobs_.pop();
+    return job;
 }
 
 DataVector ClientProcess::createImage()
@@ -147,6 +187,8 @@ DataVector ClientProcess::createImage()
     const int iterations = 0xFF;
     DataVector data;
     data.resize(screenWidth * screenHeight);
+
+    createJobs();
 
     std::vector<std::thread> threads(maxThreads);
     for (int i = 0; i < maxThreads; ++i)
