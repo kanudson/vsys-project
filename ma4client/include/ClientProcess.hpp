@@ -27,6 +27,12 @@
 #include <ma4lib/IProcess.hpp>
 #include <ma4lib/ICalculator.hpp>
 
+struct MandelbrotHost
+{
+    std::string ip;
+    std::string port;
+};
+
 class ClientProcess : public IProcess
 {
 public:
@@ -42,8 +48,16 @@ public:
 
 private:
     static constexpr int factor = 1;
-    const int screenWidth = 320 * factor;
-    const int screenHeight = 240 * factor;
+    const int screenWidth = 160 * factor;
+    const int screenHeight = 120 * factor;
+
+    float offsetLeft = -2.5f,
+        offsetRight = 1.0f,
+        offsetTop = 1.0f,
+        offsetBottom = -1.0f;
+
+    std::vector<MandelbrotHost> hosts_;
+    static void remoteCalc(ClientProcess* obj, MandelbrotHost host, DataVector* data, int threadId, int threadCount);
 
     //  1080p is ~2.25x of 720p
     //

@@ -38,16 +38,19 @@ const char* pgmFileAscii = "imgascii.pgm";
 const char* pgmFileBinary = "imgbin.pgm";
 
 int32_t ServerProcess::init()
-{    
+{
     return 0;
 }
 
 int32_t ServerProcess::run()
 {
-    UdpServer udp(ioservice_, REQUEST_PORT_BEGIN + 1);
-    TcpServer tcp(ioservice_, REQUEST_PORT_BEGIN + 1);
+    int32_t tcpport = REQUEST_PORT_BEGIN + std::atoi(args_[1].c_str());
+    std::cout << "binding on port " << tcpport << "...\n";
+
+    UdpServer udp(ioservice_, tcpport);
+    TcpServer tcp(ioservice_, tcpport);
  
-    std::cout << "server is up, waiting for connections..." << std::endl;
+    std::cout << "server is up (" << tcpport << "), waiting for connections..." << std::endl;
     ioservice_.run();
 
     //tcp::acceptor acceptor(ioservice_, tcp::endpoint(tcp::v4(), HOSTPORT));

@@ -28,6 +28,8 @@
 #include <boost/thread.hpp>
 #include <fstream>
 #include <algorithm>
+#include <thread>
+#include <future>
 
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
@@ -89,6 +91,13 @@ void ClientProcess::sendBroadcast()
 
             std::cout.write(recv_buf.data(), len);
             std::cout << "\n" << sender_endpoint.address().to_string() << "\n";
+
+            //  convert buf to string
+            std::stringstream ss;
+            ss.write(recv_buf.data(), len);
+
+            MandelbrotHost host = {sender_endpoint.address().to_string(), ss.str()};
+            hosts_.push_back(host);
         }
         std::cout << "\n\n";
     }
@@ -99,9 +108,59 @@ void ClientProcess::sendBroadcast()
 
 }
 
+void ClientProcess::remoteCalc(ClientProcess* obj, MandelbrotHost host, DataVector* data, int threadId, int threadCount)
+{
+    assert(threadId < threadCount);
+
+    RemoteCalculator calc(host.ip, host.port);
+
+    int heightBlock = obj->screenHeight / threadCount;
+    int start = heightBlock * threadId;
+    int end = heightBlock * (threadId + 1);
+
+    if (threadId + 1 == threadCount)
+    {
+        end = obj->screenHeight;
+    }
+
+    for (int y = start; y < end; ++y)
+    {
+        std::cout << "thread #" << threadId << "\t" << ((y - start) * 100) / heightBlock << "% done...\n";
+        for (int x = 0; x < obj->screenWidth; ++x)
+        {
+            const float stepHorizontal = (obj->offsetRight - obj->offsetLeft) / static_cast<float>(obj->screenWidth);
+            const float stepVertical = (obj->offsetTop - obj->offsetBottom) / static_cast<float>(obj->screenHeight);
+
+            //  Pixel (0,0) is top left!
+            const float re = obj->offsetLeft + (stepHorizontal * x);
+            const float im = obj->offsetTop - (stepVertical * y);
+
+            auto result = calc.calculate(re, im);
+            (*data)[(obj->screenWidth * y) + x] = result;
+        }
+    }
+}
+
 DataVector ClientProcess::createImage()
 {
+    const int maxThreads = 3;
     const int iterations = 0xFF;
+    DataVector data;
+    data.resize(screenWidth * screenHeight);
+
+    std::vector<std::thread> threads(maxThreads);
+    for (int i = 0; i < maxThreads; ++i)
+    {
+        std::thread th(&ClientProcess::remoteCalc, this, hosts_[i], &data, i, maxThreads);
+        threads[i] = std::move(th);
+    }
+
+    for (auto& thread : threads)
+        thread.join();
+
+    //remoteCalc(this, hosts_[0], data, 0, 1);
+
+    return data;
 
     RemoteCalculator calc("localhost", std::to_string(REQUEST_PORT_BEGIN + 1));
     calc.setScreenWidth(screenWidth);
