@@ -48,4 +48,7 @@ StringVector parseArguments(int argc, char* argv[]);
 boost::property_tree::ptree ReadServerConfig();
 boost::property_tree::ptree ReadClientConfig();
 
+constexpr int BROADCAST_PORT = 13337;
+constexpr int REQUEST_PORT_BEGIN = 13340;
+
 #endif // mavsys_vsys_h__

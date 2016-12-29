@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2016 Paul Thieme
+// Copyright (c) 2016 Kanudson
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,37 +20,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef mavsys_ServerProcess_h__
-#define mavsys_ServerProcess_h__
+#ifndef TcpConnection_h__
+#define TcpConnection_h__
 
 #include <ma4lib/vsys.hpp>
-#include <ma4lib/IProcess.hpp>
-#include <ma4lib/ICalculator.hpp>
 #include <boost/asio.hpp>
+#include <boost/array.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
-class ServerProcess : public IProcess
+class TcpConnection
+    : public boost::enable_shared_from_this<TcpConnection>
 {
 public:
-    ServerProcess(StringVector& args)
-        : IProcess(args)
-    {}
+    typedef boost::shared_ptr<TcpConnection> Pointer;
 
-    int32_t init() override;
-    int32_t run() override;
-    int32_t shutdown() override;
+    static Pointer create(boost::asio::io_service& ioservice)
+    {
+        return Pointer(new TcpConnection(ioservice));
+    }
 
-    static void processRequest(boost::asio::ip::tcp::socket socket);
+    boost::asio::ip::tcp::socket& socket()
+    {
+        return socket_;
+    }
+
+    void start();
 
 private:
-    boost::asio::io_service ioservice_;
-    boost::asio::ip::tcp::socket tcpsocket_;
+    TcpConnection(boost::asio::io_service& ioservice)
+        :socket_(ioservice)
+    {}
 
-    //  incoming connection data
-    boost::asio::ip::tcp::endpoint senderEndpoint_;
-    enum { maxLength = 1024 };
-    char data_[maxLength];
+    void handleRecieve();
+    void handleWrite();
 
-    bool keepRunning_;
-};
+    boost::asio::ip::tcp::socket socket_;
+    std::string message_;
+}
 
-#endif // mavsys_ServerProcess_h__
+#endif // TcpConnection_h__

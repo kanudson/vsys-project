@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2016 Paul Thieme
+// Copyright (c) 2016 Kanudson
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,37 +20,5 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef mavsys_ServerProcess_h__
-#define mavsys_ServerProcess_h__
+#include <TcpConnection.hpp>
 
-#include <ma4lib/vsys.hpp>
-#include <ma4lib/IProcess.hpp>
-#include <ma4lib/ICalculator.hpp>
-#include <boost/asio.hpp>
-
-class ServerProcess : public IProcess
-{
-public:
-    ServerProcess(StringVector& args)
-        : IProcess(args)
-    {}
-
-    int32_t init() override;
-    int32_t run() override;
-    int32_t shutdown() override;
-
-    static void processRequest(boost::asio::ip::tcp::socket socket);
-
-private:
-    boost::asio::io_service ioservice_;
-    boost::asio::ip::tcp::socket tcpsocket_;
-
-    //  incoming connection data
-    boost::asio::ip::tcp::endpoint senderEndpoint_;
-    enum { maxLength = 1024 };
-    char data_[maxLength];
-
-    bool keepRunning_;
-};
-
-#endif // mavsys_ServerProcess_h__

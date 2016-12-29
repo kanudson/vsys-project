@@ -51,9 +51,9 @@ int32_t ClientProcess::run()
         std::cout << str.c_str() << std::endl;
 
     auto imgdata = createImage();
-    processImagePgmAscii(imgdata, pgmFileAscii);
+    //processImagePgmAscii(imgdata, pgmFileAscii);
     processImagePgmBinary(imgdata, pgmFileBinary);
-    processImagePpmAscii(imgdata, ppmFileColor);
+    processImagePpmBinary(imgdata, ppmFileColor);
 
     return 42;
 }
@@ -65,7 +65,6 @@ int32_t ClientProcess::shutdown()
 
 DataVector ClientProcess::createImage()
 {
-    std::cout << "creatImagte()";
     const int iterations = 0xFF;
 
     CpuCalculator calc;
@@ -77,16 +76,21 @@ DataVector ClientProcess::createImage()
     calc.setOffsetLeft(-2.5f);
     calc.setOffsetRight(1.0f);
 
-    typedef void (CpuCalculator::*FuncPtr)();
-    constexpr FuncPtr fkt = &CpuCalculator::calculate;
+    auto lambda = [&]()
+    {
+        calc.calculate();
+    };
 
+    //  laeuft nicht bei gcc-5.2?!
+    //  deshalb mit lambda Funktion
+    //typedef void (CpuCalculator::*FuncPtr)();
+    //constexpr FuncPtr fkt = &CpuCalculator::calculate;
     //auto duration = measureTime<boost::chrono::milliseconds>(calc, fkt);
-    //std::cout << "createImage()... (took " << duration.count() << "ms)\n";
-    calc.calculate();
+
+    auto duration = measureTime<boost::chrono::milliseconds>(lambda);
+    std::cout << "createImage()... (took " << duration.count() << "ms)\n";
 
     return calc.getData();
-    //DataVector res;
-    //return res;
 }
 
 void ClientProcess::processImagePgmAscii(const DataVector& data, std::string filename)
@@ -109,7 +113,7 @@ void ClientProcess::processImagePgmAscii(const DataVector& data, std::string fil
     };
 
     auto duration = measureTime<boost::chrono::milliseconds>(lambda);
-    std::cout << "processImagePgm... (took " << duration.count() << "ms)\n";
+    std::cout << "processImagePgmAscii... (took " << duration.count() << "ms)\n";
 }
 
 void ClientProcess::processImagePgmBinary(const DataVector& data, std::string filename)
@@ -140,10 +144,10 @@ void ClientProcess::processImagePgmBinary(const DataVector& data, std::string fi
     };
 
     auto duration = measureTime<boost::chrono::milliseconds>(lambda);
-    std::cout << "processImagePgm... (took " << duration.count() << "ms)\n";
+    std::cout << "processImagePgmBinary... (took " << duration.count() << "ms)\n";
 }
 
-void ClientProcess::processImagePpmAscii(const DataVector& data, std::string filename)
+void ClientProcess::processImagePpmBinary(const DataVector& data, std::string filename)
 {
     std::cout << "processImagePpmAscii()";
 
@@ -172,42 +176,15 @@ void ClientProcess::processImagePpmAscii(const DataVector& data, std::string fil
             }
             else
             {
-                *iter++ = value % 255;
-                *iter++ = value % 32;
-                *iter++ = value % 4;
-            }
-            continue;
+                //  rewrote this without modulo operand
+                //*iter++ = value % 255;
+                //*iter++ = value % 32;
+                //*iter++ = value % 4;
 
-            //if (value == 0)
-            //{   //  black
-            //    *iter++ = 0x00;
-            //    *iter++ = 0x00;
-            //    *iter++ = 0x00;
-            //}
-            //else if(value > 0 && value <= 86)
-            //{   // red
-            //    *iter++ = 0xFF;
-            //    *iter++ = 0x00;
-            //    *iter++ = 0x00;
-            //}
-            //else if(value > 86 && value <= 171)
-            //{   //  green
-            //    *iter++ = 0x00;
-            //    *iter++ = 0xFF;
-            //    *iter++ = 0x00;
-            //}
-            //else if(value > 171 && value <= 254)
-            //{   //  blue
-            //    *iter++ = 0x00;
-            //    *iter++ = 0x00;
-            //    *iter++ = 0xFF;
-            //}
-            //else
-            //{   //  white
-            //    *iter++ = 0xFF;
-            //    *iter++ = 0xFF;
-            //    *iter++ = 0xFF;
-            //}
+                *iter++ = value & 0xFF;
+                *iter++ = value % 0x1F;
+                *iter++ = value % 0x03;
+            }
         }
         file.write(buffer.data(), buffer.size());
     };

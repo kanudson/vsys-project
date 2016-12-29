@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2016 Paul Thieme
+// Copyright (c) 2016 Kanudson
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,37 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef mavsys_ServerProcess_h__
-#define mavsys_ServerProcess_h__
+#ifndef TcpServer_h__
+#define TcpServer_h__
 
 #include <ma4lib/vsys.hpp>
-#include <ma4lib/IProcess.hpp>
-#include <ma4lib/ICalculator.hpp>
 #include <boost/asio.hpp>
+#include <boost/array.hpp>
+#include <boost/shared_ptr.hpp>
+#include <TcpConnection.hpp>
 
-class ServerProcess : public IProcess
+class TcpServer
 {
 public:
-    ServerProcess(StringVector& args)
-        : IProcess(args)
-    {}
-
-    int32_t init() override;
-    int32_t run() override;
-    int32_t shutdown() override;
-
-    static void processRequest(boost::asio::ip::tcp::socket socket);
+    TcpServer(boost::asio::io_service& ioservice, const int port);
 
 private:
-    boost::asio::io_service ioservice_;
-    boost::asio::ip::tcp::socket tcpsocket_;
+    void startAccept();
+    void handleAccept(TcpConnection::Pointer, const boost::system::error_code&);
 
-    //  incoming connection data
-    boost::asio::ip::tcp::endpoint senderEndpoint_;
-    enum { maxLength = 1024 };
-    char data_[maxLength];
+    const int port_;
+    boost::asio::ip::tcp::acceptor acceptor_;
 
-    bool keepRunning_;
+    std::vector<TcpConnection::Pointer> connections_;
 };
 
-#endif // mavsys_ServerProcess_h__
+#endif // TcpServer_h__

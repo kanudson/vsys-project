@@ -25,7 +25,6 @@
 #include <ma4lib/CpuCalculator.hpp>
 
 #include <boost/thread.hpp>
-#include <boost/asio.hpp>
 #include <boost/array.hpp>
 #include <fstream>
 #include <algorithm>

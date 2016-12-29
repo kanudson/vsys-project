@@ -26,8 +26,8 @@ void CpuCalculator::calculate()
 {
     data.resize(screenWidth * screenHeight);
 
-    run();
-    //run_openmp();
+    //run();
+    run_openmp();
 }
 
 int32_t CpuCalculator::calculate(float re, float im)

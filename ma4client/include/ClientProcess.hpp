@@ -39,7 +39,7 @@ public:
     int32_t shutdown() override;
 
 private:
-    static constexpr int factor = 1;
+    static constexpr int factor = 10;
     const int screenWidth = 320 * factor;
     const int screenHeight = 240 * factor;
 
@@ -61,7 +61,7 @@ private:
 
     void processImagePgmAscii(const DataVector& data, std::string filename);
     void processImagePgmBinary(const DataVector& data, std::string filename);
-    void processImagePpmAscii(const DataVector& data, std::string filename);
+    void processImagePpmBinary(const DataVector& data, std::string filename);
 };
 
 #endif // mavsys_ServerProcess_h__
