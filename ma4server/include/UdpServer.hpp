@@ -36,7 +36,7 @@ public:
         ,ioservice_(ioservice)
         ,socket_(ioservice, 
                  boost::asio::ip::udp::endpoint(
-                 boost::asio::ip::udp::v4(), BROADCAST_PORT))
+                 boost::asio::ip::udp::v4(), port))
     {
         startRecieve();
     }
