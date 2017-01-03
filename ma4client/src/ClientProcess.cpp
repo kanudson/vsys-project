@@ -45,6 +45,8 @@ const char* tcpPort = "40123";
 
 int32_t ClientProcess::init()
 {
+    serverCount = std::atoi(args_[1].c_str());
+
     return 0;
 }
 
@@ -83,7 +85,7 @@ void ClientProcess::sendBroadcast()
         boost::array<char, 1> send_buf = { 0 };
         socket.send_to(boost::asio::buffer(send_buf), receiver_endpoint);
 
-        for (std::size_t i = 0; i < 3; ++i)
+        for (std::size_t i = 0; i < serverCount; ++i)
         {
             boost::array<char, 128> recv_buf;
             udp::endpoint sender_endpoint;

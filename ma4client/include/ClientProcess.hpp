@@ -56,6 +56,8 @@ private:
     static constexpr int factor = 1;
     const int screenWidth = 160 * factor;
     const int screenHeight = 120 * factor;
+    
+    int serverCount = 1;
 
     float offsetLeft = -2.5f,
         offsetRight = 1.0f,
