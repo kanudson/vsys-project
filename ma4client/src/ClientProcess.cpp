@@ -71,12 +71,14 @@ int32_t ClientProcess::shutdown()
 
 void ClientProcess::sendBroadcast()
 {
-    std::string ipAddrStr = "192.168.2.255";
+    //  TODO make broadcast ip configurable
+    std::string ipAddrStr = "192.168.0.255";
+
     try
     {
         boost::asio::io_service io_service;
         udp::resolver resolver(io_service);
-        udp::resolver::query query(udp::v4(), ipAddrStr, std::to_string(BROADCAST_PORT));
+        udp::resolver::query query(udp::v4(), ipAddrStr, std::to_string(BROADCAST_PORT + 1));
         udp::endpoint receiver_endpoint = *resolver.resolve(query);
 
         udp::socket socket(io_service);
@@ -91,14 +93,15 @@ void ClientProcess::sendBroadcast()
             udp::endpoint sender_endpoint;
             size_t len = socket.receive_from(boost::asio::buffer(recv_buf), sender_endpoint);
 
-            std::cout.write(recv_buf.data(), len);
-            std::cout << "\n" << sender_endpoint.address().to_string() << "\n";
-
             //  convert buf to string
             std::stringstream ss;
             ss.write(recv_buf.data(), len);
+            std::string port = ss.str();
 
-            MandelbrotHost host = {sender_endpoint.address().to_string(), ss.str()};
+            std::cout << "Found server " << sender_endpoint.address().to_string()
+                << " : " << port << std::endl;
+
+            MandelbrotHost host = { sender_endpoint.address().to_string(), port };
             hosts_.push_back(host);
         }
         std::cout << "\n\n";
@@ -185,7 +188,7 @@ Job ClientProcess::getJob()
 
 DataVector ClientProcess::createImage()
 {
-    const int maxThreads = 3;
+    const int maxThreads = serverCount;
     const int iterations = 0xFF;
     DataVector data;
     data.resize(screenWidth * screenHeight);
