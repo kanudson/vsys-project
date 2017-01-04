@@ -44,9 +44,10 @@ int32_t ServerProcess::init()
 
 int32_t ServerProcess::run()
 {
+    uint16_t udpport = BROADCAST_PORT + std::atoi(args_[1].c_str());
     uint16_t tcpport = REQUEST_PORT_BEGIN + std::atoi(args_[1].c_str());
 
-    UdpServer udp(ioservice_, tcpport);
+    UdpServer udp(ioservice_, udpport, tcpport);
     TcpServer tcp(ioservice_, tcpport);
  
     std::cout << "server is up (" << tcpport << "), waiting for connections..." << std::endl;

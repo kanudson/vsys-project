@@ -30,15 +30,16 @@
 class UdpServer
 {
 public:
-    UdpServer(boost::asio::io_service& ioservice, const int port)
+    UdpServer(boost::asio::io_service& ioservice, const int port, const int replyport)
         :port_(port)
-        ,reply_(std::to_string(port))
+        ,reply_(std::to_string(replyport))
         ,ioservice_(ioservice)
         ,socket_(ioservice, 
                  boost::asio::ip::udp::endpoint(
                  boost::asio::ip::udp::v4(), port))
     {
         startRecieve();
+        std::cout << "udp running on " << port_ << " for tcp port " << replyport << std::endl;
     }
 
 private:
