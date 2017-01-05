@@ -72,19 +72,22 @@ int32_t ClientProcess::shutdown()
 void ClientProcess::sendBroadcast()
 {
     //  TODO make broadcast ip configurable
-    std::string ipAddrStr = "192.168.0.255";
+    //std::string ipAddrStr = "192.168.2.255";
+
+    //std::cout << ipAddrStr << std::endl;
 
     try
     {
         boost::asio::io_service io_service;
-        udp::resolver resolver(io_service);
-        udp::resolver::query query(udp::v4(), ipAddrStr, std::to_string(BROADCAST_PORT + 1));
-        udp::endpoint receiver_endpoint = *resolver.resolve(query);
+        //udp::resolver resolver(io_service);
+        //udp::resolver::query query(udp::v4(), ipAddrStr, std::to_string(BROADCAST_PORT + 1));
+        udp::endpoint receiver_endpoint(boost::asio::ip::address_v4::broadcast(), BROADCAST_PORT + 1);
 
         udp::socket socket(io_service);
         socket.open(udp::v4());
 
         boost::array<char, 1> send_buf = { 0 };
+        socket.set_option(boost::asio::socket_base::broadcast(true));
         socket.send_to(boost::asio::buffer(send_buf), receiver_endpoint);
 
         for (std::size_t i = 0; i < serverCount; ++i)
