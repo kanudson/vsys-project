@@ -33,8 +33,12 @@
 
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+
 using boost::asio::ip::tcp;
 using boost::asio::ip::udp;
+namespace pt = boost::property_tree;
 
 const char* pgmFileAscii = "imgascii.pgm";
 const char* pgmFileBinary = "imgbin.pgm";
@@ -45,7 +49,22 @@ const char* tcpPort = "40123";
 
 int32_t ClientProcess::init()
 {
-    serverCount = std::atoi(args_[1].c_str());
+		boost::property_tree::ptree pt;
+		boost::property_tree::ini_parser::read_ini("settings.ini", pt);
+
+		//serverCount = std::atoi(args_[1].c_str());
+
+
+		serverCount		= pt.get<int>("Settings.serverCount", 1);
+		factor				= pt.get<int>("Settings.factor", 1);
+
+		screenWidth 	= pt.get<int>("Settings.screenWidth", 160);
+		screenHeight 	= pt.get<int>("Settings.screenHeight", 120);
+
+		offsetLeft		= pt.get<float>("Settings.offsetLeft", -2.5);
+		offsetRight		= pt.get<float>("Settings.offsetRight", 1.0);
+		offsetTop			= pt.get<float>("Settings.offsetTop", 1.0);
+		offsetBottom	= pt.get<float>("Settings.offsetBottom", -1.0);
 
     return 0;
 }
@@ -57,7 +76,7 @@ int32_t ClientProcess::run()
 
     sendBroadcast();
     auto imgdata = createImage();
-    //processImagePgmAscii(imgdata, pgmFileAscii);
+    processImagePgmAscii(imgdata, pgmFileAscii);
     processImagePgmBinary(imgdata, pgmFileBinary);
     processImagePpmBinary(imgdata, ppmFileColor);
 
@@ -156,7 +175,10 @@ void ClientProcess::remoteCalc(ClientProcess* obj, MandelbrotHost host, DataVect
 
 void ClientProcess::createJobs()
 {
-    const int step = 30;
+	boost::property_tree::ptree pt;
+	boost::property_tree::ini_parser::read_ini("settings.ini", pt);
+
+    const int step = pt.get<int>("Settings.jobsteps", 30);;
 
     for (int y = 0; y < screenHeight; y += step)
     {
@@ -191,8 +213,11 @@ Job ClientProcess::getJob()
 
 DataVector ClientProcess::createImage()
 {
+		boost::property_tree::ptree pt;
+		boost::property_tree::ini_parser::read_ini("settings.ini", pt);
+
     const int maxThreads = serverCount;
-    const int iterations = 0xFF;
+    const int iterations = pt.get<int>("Settings.iterations", 255);
     DataVector data;
     data.resize(screenWidth * screenHeight);
 
