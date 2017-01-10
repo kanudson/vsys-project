@@ -59,10 +59,10 @@ private:
 
     int serverCount = 1;
 
-    float offsetLeft = -2.5f,
-        offsetRight = 1.0f,
-        offsetTop = 1.0f,
-        offsetBottom = -1.0f;
+    float offsetLeft  = -2.5f,
+         offsetRight  = 1.0f,
+         offsetTop    = 1.0f,
+         offsetBottom = -1.0f;
 
     std::vector<MandelbrotHost> hosts_;
     std::queue<Job> jobs_;
