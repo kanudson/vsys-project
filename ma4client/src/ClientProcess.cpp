@@ -75,7 +75,15 @@ int32_t ClientProcess::run()
         std::cout << str.c_str() << std::endl;
 
     sendBroadcast();
-    auto imgdata = createImage();
+
+    DataVector imgdata;
+    auto lambda = [&](){
+        imgdata = createImage();
+    };
+    auto duration = measureTime<boost::chrono::milliseconds>(lambda);
+    std::cout << "createImage()... (took " << duration.count() << "ms)\n";
+
+    //auto imgdata = createImage();
     processImagePgmAscii(imgdata, pgmFileAscii);
     processImagePgmBinary(imgdata, pgmFileBinary);
     processImagePpmBinary(imgdata, ppmFileColor);
