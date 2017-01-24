@@ -56,7 +56,9 @@ int32_t ClientProcess::init()
 
 
 		serverCount		= pt.get<int>("Settings.serverCount", 1);
-		factor				= pt.get<int>("Settings.factor", 1);
+		factor			= pt.get<int>("Settings.factor", 1);
+        iterations      = pt.get<int>("Settings.iterations", 255);
+        jobstep         = pt.get<int>("Settings.jobsteps", 30);;
 
 		screenWidth 	= pt.get<int>("Settings.screenWidth", 160);
 		screenHeight 	= pt.get<int>("Settings.screenHeight", 120);
@@ -183,20 +185,15 @@ void ClientProcess::remoteCalc(ClientProcess* obj, MandelbrotHost host, DataVect
 
 void ClientProcess::createJobs()
 {
-	boost::property_tree::ptree pt;
-	boost::property_tree::ini_parser::read_ini("settings.ini", pt);
-
-    const int step = pt.get<int>("Settings.jobsteps", 30);;
-
-    for (int y = 0; y < screenHeight; y += step)
+    for (int y = 0; y < screenHeight; y += jobstep)
     {
-        for (int x = 0; x < screenWidth; x += step)
+        for (int x = 0; x < screenWidth; x += jobstep)
         {
             Job job;
             job.links = x;
-            job.rechts = std::min(x + step, screenWidth);
+            job.rechts = std::min(x + jobstep, screenWidth);
             job.oben = y;
-            job.unten = std::min(y + step, screenHeight);
+            job.unten = std::min(y + jobstep, screenHeight);
             jobs_.push(job);
         }
     }
@@ -221,11 +218,7 @@ Job ClientProcess::getJob()
 
 DataVector ClientProcess::createImage()
 {
-		boost::property_tree::ptree pt;
-		boost::property_tree::ini_parser::read_ini("settings.ini", pt);
-
     const int maxThreads = serverCount;
-    const int iterations = pt.get<int>("Settings.iterations", 255);
     DataVector data;
     data.resize(screenWidth * screenHeight);
 

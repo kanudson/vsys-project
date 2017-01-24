@@ -58,6 +58,8 @@ private:
     int screenHeight = 120 * factor;
 
     int serverCount = 1;
+    int iterations = 255;
+    int jobstep = 30;
 
     float offsetLeft  = -2.5f,
          offsetRight  = 1.0f,
