@@ -49,24 +49,27 @@ const char* tcpPort = "40123";
 
 int32_t ClientProcess::init()
 {
-		boost::property_tree::ptree pt;
-		boost::property_tree::ini_parser::read_ini("settings.ini", pt);
+    boost::property_tree::ptree pt;
+    boost::property_tree::ini_parser::read_ini("settings.ini", pt);
 
-		//serverCount = std::atoi(args_[1].c_str());
+    //serverCount = std::atoi(args_[1].c_str());
 
 
-		serverCount		= pt.get<int>("Settings.serverCount", 1);
-		factor			= pt.get<int>("Settings.factor", 1);
-        iterations      = pt.get<int>("Settings.iterations", 255);
-        jobstep         = pt.get<int>("Settings.jobsteps", 30);;
+    serverCount		= pt.get<int>("Settings.serverCount", 1);
+    factor			= pt.get<int>("Settings.factor", 1);
+    iterations      = pt.get<int>("Settings.iterations", 255);
+    jobstep         = pt.get<int>("Settings.jobsteps", 30);;
 
-		screenWidth 	= pt.get<int>("Settings.screenWidth", 160);
-		screenHeight 	= pt.get<int>("Settings.screenHeight", 120);
+    screenWidth 	= pt.get<int>("Settings.screenWidth", 160);
+    screenHeight 	= pt.get<int>("Settings.screenHeight", 120);
 
-		offsetLeft		= pt.get<float>("Settings.offsetLeft", -2.5);
-		offsetRight		= pt.get<float>("Settings.offsetRight", 1.0);
-		offsetTop			= pt.get<float>("Settings.offsetTop", 1.0);
-		offsetBottom	= pt.get<float>("Settings.offsetBottom", -1.0);
+    offsetLeft		= pt.get<float>("Settings.offsetLeft", -2.5);
+    offsetRight		= pt.get<float>("Settings.offsetRight", 1.0);
+    offsetTop		= pt.get<float>("Settings.offsetTop", 1.0);
+    offsetBottom	= pt.get<float>("Settings.offsetBottom", -1.0);
+
+    screenWidth  *= factor;
+    screenHeight *= factor;
 
     return 0;
 }
@@ -86,7 +89,7 @@ int32_t ClientProcess::run()
     std::cout << "createImage()... (took " << duration.count() << "ms)\n";
 
     //auto imgdata = createImage();
-    processImagePgmAscii(imgdata, pgmFileAscii);
+    //processImagePgmAscii(imgdata, pgmFileAscii);
     processImagePgmBinary(imgdata, pgmFileBinary);
     processImagePpmBinary(imgdata, ppmFileColor);
 
@@ -218,50 +221,57 @@ Job ClientProcess::getJob()
 
 DataVector ClientProcess::createImage()
 {
-    const int maxThreads = serverCount;
-    DataVector data;
-    data.resize(screenWidth * screenHeight);
+    bool useServer = true;
 
-    createJobs();
-
-    std::vector<std::thread> threads(maxThreads);
-    for (int i = 0; i < maxThreads; ++i)
+    if (useServer)
     {
-        std::thread th(&ClientProcess::remoteCalc, this, hosts_[i], &data, i, maxThreads);
-        threads[i] = std::move(th);
+        const int maxThreads = serverCount;
+        DataVector data;
+        data.resize(screenWidth * screenHeight);
+
+        createJobs();
+
+        std::vector<std::thread> threads(maxThreads);
+        for (int i = 0; i < maxThreads; ++i)
+        {
+            std::thread th(&ClientProcess::remoteCalc, this, hosts_[i], &data, i, maxThreads);
+            threads[i] = std::move(th);
+        }
+
+        for (auto& thread : threads)
+            thread.join();
+
+        //remoteCalc(this, hosts_[0], data, 0, 1);
+
+        return data;
     }
-
-    for (auto& thread : threads)
-        thread.join();
-
-    //remoteCalc(this, hosts_[0], data, 0, 1);
-
-    return data;
-
-    RemoteCalculator calc("localhost", std::to_string(REQUEST_PORT_BEGIN + 1));
-    calc.setScreenWidth(screenWidth);
-    calc.setScreenHeight(screenHeight);
-    calc.setMaxIterations(iterations);
-    calc.setOffsetTop(1.0f);
-    calc.setOffsetBottom(-1.0f);
-    calc.setOffsetLeft(-2.5f);
-    calc.setOffsetRight(1.0f);
-
-    auto lambda = [&]()
+    else
     {
-        calc.calculate();
-    };
+        CpuCalculator calc;
+        calc.setScreenWidth(screenWidth);
+        calc.setScreenHeight(screenHeight);
+        calc.setMaxIterations(iterations);
+        calc.setOffsetTop(offsetTop);
+        calc.setOffsetBottom(offsetBottom);
+        calc.setOffsetLeft(offsetLeft);
+        calc.setOffsetRight(offsetRight);
 
-    //  laeuft nicht bei gcc-5.2?!
-    //  deshalb mit lambda Funktion
-    //typedef void (CpuCalculator::*FuncPtr)();
-    //constexpr FuncPtr fkt = &CpuCalculator::calculate;
-    //auto duration = measureTime<boost::chrono::milliseconds>(calc, fkt);
+        auto lambda = [&]()
+        {
+            calc.calculate();
+        };
 
-    auto duration = measureTime<boost::chrono::milliseconds>(lambda);
-    std::cout << "createImage()... (took " << duration.count() << "ms)\n";
+        //  laeuft nicht bei gcc-5.2?!
+        //  deshalb mit lambda Funktion
+        //typedef void (CpuCalculator::*FuncPtr)();
+        //constexpr FuncPtr fkt = &CpuCalculator::calculate;
+        //auto duration = measureTime<boost::chrono::milliseconds>(calc, fkt);
 
-    return calc.getData();
+        auto duration = measureTime<boost::chrono::milliseconds>(lambda);
+        std::cout << "createImage()... (took " << duration.count() << "ms)\n";
+
+        return calc.getData();
+    }
 }
 
 void ClientProcess::processImagePgmAscii(const DataVector& data, std::string filename)
