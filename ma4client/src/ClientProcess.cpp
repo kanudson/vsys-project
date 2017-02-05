@@ -50,10 +50,15 @@ const char* tcpPort = "40123";
 int32_t ClientProcess::init()
 {
     boost::property_tree::ptree pt;
-    boost::property_tree::ini_parser::read_ini("settings.ini", pt);
 
-    //serverCount = std::atoi(args_[1].c_str());
-
+    try
+    {
+        boost::property_tree::ini_parser::read_ini("settings.ini", pt);
+    }
+    catch (...)
+    {
+        std::cout << "no settings.ini found, using default values" << std::endl;
+    }
 
     serverCount		= pt.get<int>("Settings.serverCount", 1);
     factor			= pt.get<int>("Settings.factor", 1);
@@ -88,8 +93,7 @@ int32_t ClientProcess::run()
     auto duration = measureTime<boost::chrono::milliseconds>(lambda);
     std::cout << "createImage()... (took " << duration.count() << "ms)\n";
 
-    //auto imgdata = createImage();
-    //processImagePgmAscii(imgdata, pgmFileAscii);
+    processImagePgmAscii(imgdata, pgmFileAscii);
     processImagePgmBinary(imgdata, pgmFileBinary);
     processImagePpmBinary(imgdata, ppmFileColor);
 
@@ -103,16 +107,9 @@ int32_t ClientProcess::shutdown()
 
 void ClientProcess::sendBroadcast()
 {
-    //  TODO make broadcast ip configurable
-    //std::string ipAddrStr = "192.168.2.255";
-
-    //std::cout << ipAddrStr << std::endl;
-
     try
     {
         boost::asio::io_service io_service;
-        //udp::resolver resolver(io_service);
-        //udp::resolver::query query(udp::v4(), ipAddrStr, std::to_string(BROADCAST_PORT + 1));
         udp::endpoint receiver_endpoint(boost::asio::ip::address_v4::broadcast(), BROADCAST_PORT + 1);
 
         udp::socket socket(io_service);
@@ -152,6 +149,7 @@ void ClientProcess::remoteCalc(ClientProcess* obj, MandelbrotHost host, DataVect
 {
     assert(threadId < threadCount);
     RemoteCalculator calc(host.ip, host.port);
+    calc.setMaxIterations(obj->iterations);
 
     for(;;)
     {
